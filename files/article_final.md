@@ -1,8 +1,8 @@
-# オブジェクトリテラル内の computed property メソッドが遅い原因を追求した
+# object literal + computed property + method definition が遅い問題
 
 ## 結論
 
-「オブジェクトリテラル」「computed property」「毎回新しい関数の生成」の **3条件が揃うと極端に遅くなる**。
+「オブジェクトリテラル」「computed property」「メソッド定義(関数生成)」の3条件が揃うと極端に遅くなる。
 
 ```javascript
 // 遅い（3条件が揃っている）

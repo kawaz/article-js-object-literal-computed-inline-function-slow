@@ -1,15 +1,15 @@
-// JSC (Bun) で V8 と異なる挙動を示す部分の深掘り検証
+// Deep dive into JSC (Bun) behavior that differs from V8
 
-console.log("=== JSC 特有の挙動を深掘り ===\n");
+console.log("=== JSC-specific behavior deep dive ===\n");
 
 const SYM = Symbol("dispose");
 
 // ========================================
-// 検証3: function / arrow / method の違い
-// V8 では大差なし、JSC では差がある
+// Test 3: function / arrow / method differences
+// V8 shows little difference, JSC shows variance
 // ========================================
 
-console.log("=== 検証3再現: function vs arrow vs method ===\n");
+console.log("=== Test 3 reproduction: function vs arrow vs method ===\n");
 
 function bench(name, fn, iterations = 100000) {
   for (let i = 0; i < 1000; i++) fn();
@@ -31,8 +31,8 @@ function benchCreateAndCall(name, createFn, callKey, iterations = 100000) {
   return performance.now() - start;
 }
 
-// 生成のみ
-console.log("【生成コストのみ】");
+// Creation only
+console.log("[Creation cost only]");
 const r1 = bench("computed + function", () => ({ [SYM]: function() {} }));
 const r2 = bench("computed + arrow", () => ({ [SYM]: () => {} }));
 const r3 = bench("computed + method", () => ({ [SYM]() {} }));
@@ -40,8 +40,8 @@ console.log(`  function: ${r1.toFixed(2)}ms`);
 console.log(`  arrow:    ${r2.toFixed(2)}ms`);
 console.log(`  method:   ${r3.toFixed(2)}ms`);
 
-// 生成 + 呼び出し
-console.log("\n【生成 + 呼び出し】");
+// Creation + call
+console.log("\n[Creation + call]");
 const c1 = benchCreateAndCall("", () => ({ [SYM]: function() {} }), SYM);
 const c2 = benchCreateAndCall("", () => ({ [SYM]: () => {} }), SYM);
 const c3 = benchCreateAndCall("", () => ({ [SYM]() {} }), SYM);
@@ -50,11 +50,11 @@ console.log(`  arrow:    ${c2.toFixed(2)}ms`);
 console.log(`  method:   ${c3.toFixed(2)}ms`);
 
 // ========================================
-// 検証8: using vs try-finally vs simple
-// V8 では大差なし、JSC (Bun) では class + using が謎に遅い
+// Test 8: using vs try-finally vs simple
+// V8 shows little difference, JSC (Bun) shows class + using is mysteriously slow
 // ========================================
 
-console.log("\n\n=== 検証8再現: using vs try-finally ===\n");
+console.log("\n\n=== Test 8 reproduction: using vs try-finally ===\n");
 
 class Lock {
   [SYM]() {}
@@ -64,7 +64,7 @@ function createLiteral() {
   return { [SYM]() {} };
 }
 
-// using が使えるか確認
+// Check if using syntax is supported
 const hasUsing = (() => {
   try {
     eval('{ using x = { [Symbol.dispose]() {} }; }');
@@ -72,10 +72,10 @@ const hasUsing = (() => {
   } catch { return false; }
 })();
 
-console.log(`using 構文サポート: ${hasUsing}`);
+console.log(`using syntax support: ${hasUsing}`);
 
 if (hasUsing) {
-  // using 構文
+  // using syntax
   const usingLiteral = new Function('createFn', 'SYM', `
     return function(iterations) {
       const start = performance.now();
@@ -135,8 +135,8 @@ if (hasUsing) {
   }
 
   const N = 100000;
-  
-  // ウォームアップ
+
+  // Warmup
   usingLiteral(1000);
   usingClass(1000);
   tryFinallyLiteral(1000);
@@ -144,61 +144,61 @@ if (hasUsing) {
   simpleLiteral(1000);
   simpleClass(1000);
 
-  console.log("\n【literal (computed + method)】");
+  console.log("\n[literal (computed + method)]");
   console.log(`  using:       ${usingLiteral(N).toFixed(2)}ms`);
   console.log(`  try-finally: ${tryFinallyLiteral(N).toFixed(2)}ms`);
   console.log(`  simple:      ${simpleLiteral(N).toFixed(2)}ms`);
 
-  console.log("\n【class】");
+  console.log("\n[class]");
   console.log(`  using:       ${usingClass(N).toFixed(2)}ms`);
   console.log(`  try-finally: ${tryFinallyClass(N).toFixed(2)}ms`);
   console.log(`  simple:      ${simpleClass(N).toFixed(2)}ms`);
 
-  // 複数回実行して安定性確認
-  console.log("\n\n=== 複数回実行で安定性確認 ===\n");
-  
-  console.log("class + using (5回):");
+  // Multiple runs for stability check
+  console.log("\n\n=== Multiple runs for stability check ===\n");
+
+  console.log("class + using (5 runs):");
   for (let run = 0; run < 5; run++) {
     console.log(`  Run ${run + 1}: ${usingClass(N).toFixed(2)}ms`);
   }
 
-  console.log("\nclass + simple (5回):");
+  console.log("\nclass + simple (5 runs):");
   for (let run = 0; run < 5; run++) {
     console.log(`  Run ${run + 1}: ${simpleClass(N).toFixed(2)}ms`);
   }
 }
 
 // ========================================
-// 追加検証: JSC の method 定義の内部表現の違い?
+// Additional: Exploring internal differences in method definition
 // ========================================
 
-console.log("\n\n=== 追加: method 構文の内部的な違いを探る ===\n");
+console.log("\n\n=== Additional: Exploring method syntax internals ===\n");
 
-// method と function で生成される関数の違いを確認
+// Check differences between method and function
 const objMethod = { foo() {} };
 const objFunction = { foo: function() {} };
 const objArrow = { foo: () => {} };
 const objNamed = { foo: function foo() {} };
 
-console.log("関数の toString():");
+console.log("Function toString():");
 console.log(`  method:   ${objMethod.foo.toString().slice(0, 30)}...`);
 console.log(`  function: ${objFunction.foo.toString().slice(0, 30)}...`);
 console.log(`  arrow:    ${objArrow.foo.toString().slice(0, 30)}...`);
 console.log(`  named:    ${objNamed.foo.toString().slice(0, 30)}...`);
 
-console.log("\n関数の name プロパティ:");
+console.log("\nFunction name property:");
 console.log(`  method:   "${objMethod.foo.name}"`);
 console.log(`  function: "${objFunction.foo.name}"`);
 console.log(`  arrow:    "${objArrow.foo.name}"`);
 console.log(`  named:    "${objNamed.foo.name}"`);
 
-console.log("\n関数の prototype:");
+console.log("\nFunction prototype:");
 console.log(`  method:   ${objMethod.foo.prototype}`);
 console.log(`  function: ${objFunction.foo.prototype}`);
 console.log(`  arrow:    ${objArrow.foo.prototype}`);
 
-// prototype の有無でパフォーマンスが変わる?
-console.log("\n\n=== prototype の有無とパフォーマンス ===\n");
+// Does prototype presence affect performance?
+console.log("\n\n=== Prototype presence and performance ===\n");
 
 const r4 = bench("arrow (no prototype)", () => ({ [SYM]: () => {} }));
 const r5 = bench("function (has prototype)", () => ({ [SYM]: function() {} }));
@@ -208,8 +208,8 @@ console.log(`  arrow (no prototype):      ${r4.toFixed(2)}ms`);
 console.log(`  function (has prototype):  ${r5.toFixed(2)}ms`);
 console.log(`  method (no prototype):     ${r6.toFixed(2)}ms`);
 
-// 静的キーでも同じ傾向?
-console.log("\n【静的キーの場合】");
+// Same trend with static keys?
+console.log("\n[static key]");
 const s1 = bench("static + function", () => ({ foo: function() {} }));
 const s2 = bench("static + arrow", () => ({ foo: () => {} }));
 const s3 = bench("static + method", () => ({ foo() {} }));

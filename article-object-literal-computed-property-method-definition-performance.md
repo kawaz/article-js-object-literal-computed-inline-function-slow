@@ -1,30 +1,30 @@
-# object literal + computed property + method definition が遅い問題
+# Object Literal + Computed Property + Method Definition Performance Issue
 
-## 結論
+## Conclusion
 
-「オブジェクトリテラル」「computed property」「メソッド定義(関数生成)」の3条件が揃うと極端に遅くなる。
+When "object literal", "computed property", and "method definition (function creation)" are combined, performance becomes extremely slow.
 
 ```ts
-// 遅い（3条件が揃っている）
+// Slow (all 3 conditions met)
 function createLock() {
   return {
-    [Symbol.dispose]() { ... }  // リテラル + computed + 毎回新関数
+    [Symbol.dispose]() { ... }  // literal + computed + new function each time
   };
 }
 ```
 
-対応としては3条件のどれかを外す形に直してやれば良い。
+The fix is to remove any one of these three conditions.
 
 ```ts
-// 速い（いずれかの条件を外す）
+// Fast (remove one of the conditions)
 function createLock() {
   const release = () => { ... };
-  return { [Symbol.dispose]: release };  // 関数を事前定義
+  return { [Symbol.dispose]: release };  // pre-defined function
 }
 
 function createLock() {
   const obj = {};
-  obj[Symbol.dispose] = function() { ... };  // 後付け
+  obj[Symbol.dispose] = function() { ... };  // add after creation
   return obj;
 }
 
@@ -35,12 +35,12 @@ class Lock {
 
 -----
 
-## きっかけ
+## Background
 
-[@vanilagy氏のポスト](https://x.com/vanilagy/status/2005003400023593125)で、ファクトリ関数内の `[Symbol.dispose]()` の行がプロファイラで 135.5ms と異常に遅いという報告があった。その後 class に書き換えたら劇的に改善したとのこと。
+[@vanilagy's post](https://x.com/vanilagy/status/2005003400023593125) reported that a `[Symbol.dispose]()` line in a factory function showed 135.5ms in the profiler - abnormally slow. After rewriting to a class, performance improved dramatically.
 
 ```javascript
-// 遅かったコード
+// The slow code
 function createLock() {
   let released = false;
   return {
@@ -55,106 +55,105 @@ function createLock() {
 }
 ```
 
-最初に思いついた仮説は以下の通り
+Initial hypotheses:
 
-1. クロージャが遅い？(ありそう)
-2. 毎回新しい関数を生成するのが遅い？(ありそう)
-3. メソッド定義が遅い？(なさそう)
-4. computed property（`[expr]:`）が遅い？(ありそう)
-5. Symbol の computed property（`[Symbol.dispose]:`）が遅い？(普通の用途だしなさそう)
-6. オブジェクトリテラルが遅い？(なさそう)
+1. Closures are slow? (likely)
+2. Creating new functions each time is slow? (likely)
+3. Method definition is slow? (unlikely)
+4. Computed property (`[expr]`) is slow? (likely)
+5. Symbol computed property (`[Symbol.dispose]`) is slow? (unlikely, common usage)
+6. Object literals are slow? (unlikely)
 
-これらを順に検証していった。
+These were tested one by one.
 
 -----
 
-## 前提知識: Hidden Classes と Inline Cache
+## Prerequisites: Hidden Classes and Inline Cache
 
-検証の前に、JavaScript エンジンの最適化の仕組みを簡単に説明する（今回の現象解読のために初めて調べた内容なので間違いがあるかもしれないが、自分の理解のまとめ）。
+Before testing, a brief explanation of JavaScript engine optimization (this is my first time researching this for understanding the phenomenon, so there may be errors).
 
 ### Hidden Classes
 
-JavaScript は動的型付けだが、エンジンは内部的に「隠しクラス」を作ってオブジェクトの形状（Shape）を追跡している。V8 では Maps、JSC では Structures と呼ばれる。
+JavaScript is dynamically typed, but engines internally create "hidden classes" to track object shapes. Called Maps in V8, Structures in JSC.
 
 ```javascript
-const obj = {};      // Shape S0 (空)
-obj.x = 1;           // Shape S0 → S1 (x を持つ)
-obj.y = 2;           // Shape S1 → S2 (x, y を持つ)
+const obj = {};      // Shape S0 (empty)
+obj.x = 1;           // Shape S0 → S1 (has x)
+obj.y = 2;           // Shape S1 → S2 (has x, y)
 ```
 
-同じ順序でプロパティを追加したオブジェクトは同じ Shape を共有でき、これによりプロパティアクセスが最適化される。
+Objects with properties added in the same order can share the same Shape, optimizing property access.
 
-オブジェクトリテラルで一発生成する場合は transition が発生せず、最初から最終的な Shape が決まるので最も効率的。
+Creating with object literal in one shot is most efficient as no transitions occur - the final Shape is determined immediately.
 
-ただし、これは最初の Shape 生成時だけの話で、同じパターンで2個目以降を作るときは既存のチェーンが再利用される。なのでこれが大きな問題になる事は少ないはず（ハードコードされたコードでは追加順が固定されるため、問題になるのはループで不定なフィールドリストから動的生成する場合くらいだと思う）。
+However, this only applies to initial Shape creation. When creating second and subsequent objects with the same pattern, the existing chain is reused. So this rarely becomes a major problem (in hardcoded code, the addition order is fixed, so the issue mainly arises when dynamically generating from an indeterminate field list in a loop).
 
 ### Inline Cache (IC)
 
-プロパティアクセスや関数呼び出しの結果をキャッシュして、次回以降の検索をスキップする最適化。
+Optimization that caches results of property access and function calls, skipping lookups on subsequent calls.
 
 ```javascript
 function call(obj) {
-  obj.dispose();  // ← ここに IC が仕込まれる
+  obj.dispose();  // ← IC is applied here
 }
 ```
 
-IC は「常に同じ Shape / 同じ関数が来る」と仮定して最適化する。
-異なるものが来ると最適化が解除（Deoptimization）される。
+IC optimizes assuming "always the same Shape / same function". When something different arrives, optimization is disabled (Deoptimization).
 
 ### Deoptimization (Deopt)
 
-JIT コンパイラが最適化時に置いた仮定が崩れると、最適化されたコードを捨ててまた遅いコードに戻る。
+When assumptions made by the JIT compiler during optimization break down, the optimized code is discarded and reverts to slower code.
 
 ```
-最適化「この呼び出しでは常に関数Aが呼ばれるはず」
+Optimization: "This call always invokes function A"
     ↓
-実際は関数Bが来た
+Actually function B arrived
     ↓
-"wrong call target" で Deopt
+Deopt due to "wrong call target"
     ↓
-再最適化を試みる → また違う関数 → Deopt...
+Try to reoptimize → different function again → Deopt...
 ```
 
 -----
 
-## 検証1: 何が遅さの原因か切り分ける
+## Test 1: Isolating the Cause of Slowness
 
-まず、どの条件が遅さに寄与しているか総当たりで検証した。
+First, an exhaustive test to determine which conditions contribute to slowness.
 
-### 検証コード
+### Test Code
 
 ```javascript
 const SYM = Symbol("dispose");
 const sharedFn = function() {};
 
-// リテラル + computed + 毎回新関数
+// literal + computed + new function each time
 function literalComputedNewFn() {
   return { [SYM]() {} };
 }
 
-// リテラル + computed + 共有関数
+// literal + computed + shared function
 function literalComputedSharedFn() {
   return { [SYM]: sharedFn };
 }
 
-// リテラル + 静的キー + 毎回新関数
+// literal + static key + new function each time
 function literalStaticNewFn() {
   return { dispose() {} };
 }
 
-// リテラル + 静的キー + 共有関数
+// literal + static key + shared function
 function literalStaticSharedFn() {
   return { dispose: sharedFn };
 }
 
-// 後付け + computed + 毎回新関数
+// add later + computed + new function each time
 function addLaterComputedNewFn() {
   const obj = {};
   obj[SYM] = function() {};
   return obj;
 }
 
-// 後付け + computed + 共有関数
+// add later + computed + shared function
 function addLaterComputedSharedFn() {
   const obj = {};
   obj[SYM] = sharedFn;
@@ -167,20 +166,20 @@ class WithClass {
 }
 ```
 
-### 結果: 生成 + 呼び出し（10万回）
+### Results: Creation + Call (100,000 times)
 
-| パターン | V8 (Node) | JSC (Bun) |
+| Pattern | V8 (Node) | JSC (Bun) |
 |---|---|---|
-| **リテラル + computed + 毎回新関数** | **30.12ms** | **13.22ms** |
-| リテラル + computed + 共有関数 | 4.30ms | 2.52ms |
-| リテラル + 静的キー + 毎回新関数 | 2.88ms | 3.80ms |
-| リテラル + 静的キー + 共有関数 | 2.59ms | 1.32ms |
-| 後付け + computed + 毎回新関数 | 4.19ms | 2.06ms |
-| 後付け + computed + 共有関数 | 2.30ms | 2.02ms |
+| **literal + computed + new function** | **30.12ms** | **13.22ms** |
+| literal + computed + shared function | 4.30ms | 2.52ms |
+| literal + static key + new function | 2.88ms | 3.80ms |
+| literal + static key + shared function | 2.59ms | 1.32ms |
+| add later + computed + new function | 4.19ms | 2.06ms |
+| add later + computed + shared function | 2.30ms | 2.02ms |
 | class + computed | 3.86ms | 3.20ms |
 
 <details>
-<summary>ベンチマーク実行方法</summary>
+<summary>How to run benchmarks</summary>
 
 ```bash
 # Node.js (V8)
@@ -189,7 +188,7 @@ node benchmarks/bench_fn_types.js
 # Bun (JSC)
 bun benchmarks/bench_fn_types.js
 
-# V8 deopt トレース付き
+# V8 with deopt trace
 node --trace-opt --trace-deopt benchmarks/bench_fn_types.js
 ```
 
@@ -197,25 +196,25 @@ node --trace-opt --trace-deopt benchmarks/bench_fn_types.js
 
 </details>
 
-### 発見
+### Findings
 
-「リテラル + computed + 毎回新関数」の組み合わせだけが突出して遅い。
+Only the "literal + computed + new function each time" combination is significantly slow.
 
-条件を一つでも外すと速くなる：
+Removing any one condition makes it fast:
 
-- 共有関数にする → 速い
-- 後付けにする → 速い
-- 静的キーにする → 速い
-- class にする → 速い
+- Use shared function → fast
+- Add after creation → fast
+- Use static key → fast
+- Use class → fast
 
 -----
 
-## 検証2: クロージャは関係あるか
+## Test 2: Are Closures Related?
 
-クロージャが原因という仮説を検証した。
+Tested the hypothesis that closures are the cause.
 
 ```javascript
-// クロージャあり
+// With closure
 function withClosure() {
   let state = false;
   return {
@@ -223,7 +222,7 @@ function withClosure() {
   };
 }
 
-// クロージャなし
+// Without closure
 function withoutClosure() {
   return {
     [Symbol.dispose]() {}
@@ -231,16 +230,16 @@ function withoutClosure() {
 }
 ```
 
-結果: どちらも同様に遅い。**クロージャは無関係**だった。
+Result: Both are equally slow. **Closures are unrelated**.
 
 -----
 
-## 検証3: function / arrow / method の違い
+## Test 3: Difference Between function / arrow / method
 
-関数の書き方による違いを検証した。
+Tested differences based on function syntax.
 
 ```javascript
-// メソッド記法
+// Method shorthand
 { [SYM]() {} }
 
 // function
@@ -250,14 +249,14 @@ function withoutClosure() {
 { [SYM]: () => {} }
 ```
 
-| パターン | V8 | JSC |
+| Pattern | V8 | JSC |
 |---|---|---|
 | computed + function | 28.44ms | 21.44ms |
 | computed + arrow | 31.16ms | 19.15ms |
 | computed + method | 32.09ms | 12.69ms |
 
 <details>
-<summary>ベンチマーク実行方法</summary>
+<summary>How to run benchmarks</summary>
 
 ```bash
 node benchmarks/bench_fn_types.js
@@ -268,63 +267,63 @@ bun benchmarks/bench_fn_types.js
 
 </details>
 
-結果: どれも同様に遅い。**関数の書き方は無関係**だった。
+Result: All are equally slow. **Function syntax is unrelated**.
 
 -----
 
-## 検証4: プリミティブ値なら問題ないか
+## Test 4: Is It OK with Primitive Values?
 
-毎回新しい値でも、関数以外なら遅くならないのか検証した。
+Tested whether non-function values are slow even when new each time.
 
 ```javascript
 let counter = 0;
 
-// 毎回新しい数値
+// New number each time
 function createWithNewNumber() {
   return { [SYM]: counter++ };
 }
 
-// 毎回新しい関数
+// New function each time
 function createWithNewFunction() {
   return { [SYM]: function() {} };
 }
 ```
 
-| パターン | V8（生成+アクセス） | V8（生成+呼び出し） |
+| Pattern | V8 (create+access) | V8 (create+call) |
 |---|---|---|
-| 毎回新しい数値 | 2.15ms | - |
-| 毎回新しい関数 | 29.88ms | **89.59ms** |
+| new number each time | 2.15ms | - |
+| new function each time | 29.88ms | **89.59ms** |
 
-結果: **関数の場合だけ遅い**。さらに、参照するだけなら 30ms 程度だが、呼び出すと 90ms に跳ね上がる。
+Result: **Only functions are slow**. Furthermore, just accessing is around 30ms, but calling jumps to 90ms.
 
 -----
 
-## 検証5: なぜ「呼び出し」で遅くなるか
+## Test 5: Why Is "Calling" Slower?
 
-V8 のトレースオプションで Deoptimization の発生を確認した。
+Confirmed Deoptimization occurrence using V8 trace options.
 
 ```bash
 node --trace-opt --trace-deopt bench.js
 ```
 
-出力（抜粋）:
+Output (excerpt):
 ```
 [bailout (kind: deopt-eager, reason: wrong call target): ...]
 [bailout (kind: deopt-eager, reason: wrong call target): ...]
 ```
 
-`wrong call target`（呼び出し先が想定と違う）という理由で Deopt が繰り返し発生していた。
+Deopt was repeatedly occurring with the reason `wrong call target` (call target differs from expected).
 
-毎回新しい関数オブジェクトが生成されるため、JIT が「この関数が呼ばれるはず」と最適化しても、実際には別の関数が来て Deopt が発生する。これが繰り返されることで大幅に遅くなる。
+Because a new function object is created each time, even when JIT optimizes assuming "this function will be called", a different function actually arrives causing Deopt. This repetition causes significant slowdown.
 
 -----
 
-## 検証6: 関数を共有すれば速くなるか
+## Test 6: Does Sharing Functions Speed Things Up?
 
-同じ関数オブジェクトを使い回せば Deopt を回避できるはず。
+Reusing the same function object should avoid Deopt.
 
 ```javascript
-// 遅い: 毎回新しい関数
+// Slow: new function each time
 function createLock() {
   let released = false;
   return {
@@ -333,7 +332,7 @@ function createLock() {
   };
 }
 
-// 速い: release と dispose で同じ関数を共有
+// Fast: share the same function for release and dispose
 function createLock() {
   let released = false;
   const release = () => { if (released) return; released = true; };
@@ -341,41 +340,41 @@ function createLock() {
 }
 ```
 
-| パターン | V8 |
+| Pattern | V8 |
 |---|---|
-| 毎回新関数 | 36.23ms |
-| **関数を共有** | **4.14ms** |
+| new function each time | 36.23ms |
+| **shared function** | **4.14ms** |
 | class | 4.49ms |
 
-結果: **約9倍高速化**。class と同等の速度になった。
+Result: **~9x faster**. Achieves same speed as class.
 
 -----
 
-## 検証7: using 構文や try-finally は関係あるか
+## Test 7: Are using Syntax or try-finally Related?
 
-元のコードは `using` 構文で使うことを想定していたようだ。構文自体が遅さの原因か検証した。
+The original code was intended for use with `using` syntax. Tested whether the syntax itself causes slowness.
 
 ```javascript
-// using 構文
+// using syntax
 { using lock = createLock(); }
 
 // try-finally
 const lock = createLock();
 try { } finally { lock[Symbol.dispose](); }
 
-// 単純なループ
+// simple loop
 const lock = createLock();
 lock[Symbol.dispose]();
 ```
 
-| パターン | Bun (literal) | Bun (class) |
+| Pattern | Bun (literal) | Bun (class) |
 |---|---|---|
 | using | 25.31ms | 13.87ms |
 | try-finally | 24.96ms | 2.38ms |
 | simple loop | 23.28ms | 2.38ms |
 
 <details>
-<summary>ベンチマーク実行方法</summary>
+<summary>How to run benchmarks</summary>
 
 ```bash
 bun benchmarks/bench_jsc_using.js
@@ -385,90 +384,90 @@ bun benchmarks/bench_jsc_using.js
 
 </details>
 
-結果: **構文による差はほぼない**。遅さの原因は構文ではなくオブジェクト生成パターンだ。
+Result: **Almost no difference by syntax**. The cause of slowness is the object creation pattern, not the syntax.
 
 -----
 
-## 検証8: 135ms の謎
+## Test 8: The 135ms Mystery
 
-元ポストでは 135.5ms という数字だったが、こちらの検証では最大でも 30〜90ms 程度だった。
+The original post mentioned 135.5ms, but our tests showed at most 30-90ms.
 
-長時間実行でバッチごとの時間を計測したところ：
+When measuring time per batch during long-running execution:
 
 ```
 literal computed: 83.1, 28.7, 30.2, 29.2, 27.2ms
 class:            3.3,  2.7,  2.7,  2.5,  1.1ms
 ```
 
-最初のバッチで 83ms と突出している。これは JIT コンパイルと Deopt の繰り返しによる初期化コスト。
+The first batch stands out at 83ms. This is initialization cost from repeated JIT compilation and Deopt.
 
-DevTools のプロファイラはこの Deopt コストを「その行」に集約して表示するため、実際より大きく見えることがある。135ms はプロファイラのオーバーヘッドや他の要因も含まれていると考えられる。
-
------
-
-## なぜ「リテラル + computed + 毎回新関数」だけ遅いのか
-
-3条件が揃うと V8 の特定の最適化パスを外れるようだ。
-
-- **後付け**なら、静的な Shape を作ってから既知の transition で追加するため最適化が効く
-- **静的キー**なら、リテラル解析時に Shape を決定できるため最適化が効く
-- **共有関数**なら、呼び出し先が常に同じなので IC が安定する
-- **class** なら、プロトタイプ上の同一関数を共有するので IC が安定する
-
-「リテラル + computed + 毎回新関数」の場合：
-1. computed property のためリテラル解析時に Shape を決定できない
-2. 毎回新しい関数オブジェクトが生成される
-3. 呼び出しのたびに `wrong call target` で Deopt
-4. 最適化 → Deopt → 再最適化 の繰り返し
+DevTools profiler aggregates this Deopt cost to "that line", making it appear larger than reality. 135ms likely includes profiler overhead and other factors.
 
 -----
 
-## まとめ
+## Why Is Only "Literal + Computed + New Function Each Time" Slow?
 
-| 仮説 | 結果 |
+When all 3 conditions are met, it seems to miss V8's specific optimization path.
+
+- **Add later**: Creates static Shape first, then adds via known transition, so optimization works
+- **Static key**: Shape can be determined at literal parsing time, so optimization works
+- **Shared function**: Call target is always the same, so IC remains stable
+- **Class**: Shares same function on prototype, so IC remains stable
+
+For "literal + computed + new function each time":
+1. Cannot determine Shape at literal parsing due to computed property
+2. New function object created each time
+3. Deopt with `wrong call target` on every call
+4. Cycle of optimization → Deopt → re-optimization
+
+-----
+
+## Summary
+
+| Hypothesis | Result |
 |---|---|
-| クロージャが遅い | ❌ 無関係 |
-| computed property が遅い | △ 単独では問題ない |
-| オブジェクトリテラルが遅い | △ 単独では問題ない |
-| メソッド定義が遅い | △ 単独では問題ない |
-| function/arrow/method の違い | ❌ 無関係 |
-| using 構文が遅い | ❌ 無関係 |
-| **3条件の組み合わせ** | ✅ **これが原因** |
+| Closures are slow | ❌ Unrelated |
+| Computed property is slow | △ No problem alone |
+| Object literal is slow | △ No problem alone |
+| Method definition is slow | △ No problem alone |
+| function/arrow/method difference | ❌ Unrelated |
+| using syntax is slow | ❌ Unrelated |
+| **Combination of 3 conditions** | ✅ **This is the cause** |
 
-遅くなる条件: **「リテラル」+「computed property」+「毎回新しい関数の生成と呼び出し」**
+Slowdown condition: **"Literal" + "computed property" + "new function creation and invocation each time"**
 
 -----
 
-## 解決策
+## Solutions
 
 ```javascript
-// ❌ 遅い
+// ❌ Slow
 function createLock() {
   return {
     [Symbol.dispose]() { ... }
   };
 }
 
-// ✅ 速い: 関数を共有
+// ✅ Fast: share function
 function createLock() {
   const release = () => { ... };
   return { release, [Symbol.dispose]: release };
 }
 
-// ✅ 速い: モジュールレベルで関数定義
+// ✅ Fast: define function at module level
 const dispose = function() { this.release(); };
 function createLock() {
   return { release() { ... }, [Symbol.dispose]: dispose };
 }
 
-// ✅ 速い: 後付け
+// ✅ Fast: add after creation
 function createLock() {
   const obj = { release() { ... } };
   obj[Symbol.dispose] = function() { this.release(); };
   return obj;
 }
 
-// ✅ 速い: class
+// ✅ Fast: class
 class Lock {
   [Symbol.dispose]() { ... }
 }
@@ -476,65 +475,65 @@ class Lock {
 
 -----
 
-## 補足: オブジェクト構築のベストプラクティス
+## Appendix: Object Construction Best Practices
 
-今回の検証を踏まえて、オブジェクト構築時の transition chain についてまとめる。
+Based on this investigation, summarizing transition chain considerations during object construction.
 
-### 基本: リテラル一発生成がベスト
+### Basics: Single-shot Literal Creation is Best
 
 ```javascript
-// 最適: transition が発生しない
+// Optimal: no transitions occur
 const obj = { a: 1, b: 2, c: 3 };
 
-// 次点: transition は発生するが、同じパターンならキャッシュが効く
+// Second best: transitions occur, but cache works for same patterns
 const obj = {};
 obj.a = 1;
 obj.b = 2;
 obj.c = 3;
 ```
 
-後者はプロパティ追加のたびに Shape が遷移するが、これは最初の Shape 生成時だけの話。同じパターンで2個目以降を作るときは既存のチェーンを再利用するため、大量生成でもそこまで問題にならない。
+The latter transitions Shape with each property addition, but this only applies to initial Shape creation. For second and subsequent objects with the same pattern, the existing chain is reused, so mass creation isn't a major problem.
 
-### 例外: computed property は後付けにする
+### Exception: Add Computed Properties After Creation
 
-ただし computed property がある場合は話が変わる。
+However, when computed properties are involved, things change.
 
 ```javascript
-// ❌ 避ける: リテラル内に computed property + 関数
+// ❌ Avoid: computed property + function inside literal
 function create() {
   return {
     staticMethod() { ... },
-    [Symbol.dispose]() { ... }  // これが問題
+    [Symbol.dispose]() { ... }  // This is the problem
   };
 }
 
-// ✅ 推奨: 静的プロパティはリテラルで、動的プロパティは後付け
+// ✅ Recommended: static properties in literal, dynamic properties added after
 function create() {
-  const obj = { staticMethod() { ... } };  // 静的部分はリテラル
-  obj[Symbol.dispose] = function() { ... };  // 動的部分は後付け
+  const obj = { staticMethod() { ... } };  // Static part in literal
+  obj[Symbol.dispose] = function() { ... };  // Dynamic part added after
   return obj;
 }
 ```
 
-特に computed property の値が関数オブジェクトである場合、現状の V8 / JSC の最適化では「リテラル + computed + 毎回新関数」の組み合わせで大幅な性能劣化が発生する。この組み合わせは避けるべき。
+Especially when the computed property value is a function object, current V8/JSC optimizations show significant performance degradation with "literal + computed + new function each time". This combination should be avoided.
 
-### まとめ
+### Summary
 
-| 状況 | 推奨 |
+| Situation | Recommendation |
 |---|---|
-| 静的プロパティのみ | リテラル一発生成 |
-| computed property あり（値が関数以外） | リテラル一発でも問題なし |
-| computed property あり（値が関数） | 静的部分はリテラル、動的部分は後付け or class |
+| Static properties only | Single-shot literal creation |
+| Has computed property (non-function value) | Literal creation is fine |
+| Has computed property (function value) | Static part in literal, dynamic part added after or use class |
 
 -----
 
-## 参考資料
+## References
 
-### V8 公式
+### V8 Official
 - [Fast properties in V8](https://v8.dev/blog/fast-properties)
 - [Maps (Hidden Classes) in V8](https://v8.dev/docs/hidden-classes)
 
-### 解説記事
+### Articles
 - [JavaScript engine fundamentals: Shapes and Inline Caches](https://mathiasbynens.be/notes/shapes-ics) - Mathias Bynens
 - [JavaScript Engines Hidden Classes](https://draft.li/blog/2016/12/22/javascript-engines-hidden-classes/)
 - [V8 Hidden class](https://engineering.linecorp.com/en/blog/v8-hidden-class) - LINE Engineering

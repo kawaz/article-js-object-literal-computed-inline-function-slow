@@ -1,27 +1,27 @@
-// JSC での function vs arrow vs method の詳細検証
+// Detailed comparison of function vs arrow vs method in JSC
 
-console.log("=== function vs arrow vs method 詳細検証 ===\n");
+console.log("=== function vs arrow vs method detailed comparison ===\n");
 console.log(`Runtime: ${typeof Bun !== 'undefined' ? 'Bun (JSC)' : 'Node (V8)'}\n`);
 
 const SYM = Symbol("test");
 const N = 100000;
 
 function bench(name, fn) {
-  // ウォームアップ
+  // Warmup
   for (let i = 0; i < 1000; i++) fn();
-  
+
   const start = performance.now();
   for (let i = 0; i < N; i++) fn();
   return performance.now() - start;
 }
 
 function benchCall(name, createFn, key) {
-  // ウォームアップ
+  // Warmup
   for (let i = 0; i < 1000; i++) {
     const obj = createFn();
     obj[key]();
   }
-  
+
   const start = performance.now();
   for (let i = 0; i < N; i++) {
     const obj = createFn();
@@ -31,12 +31,12 @@ function benchCall(name, createFn, key) {
 }
 
 // ========================================
-// 生成コスト
+// Creation cost only
 // ========================================
 
-console.log("=== 生成コストのみ ===\n");
+console.log("=== Creation cost only ===\n");
 
-console.log("【computed key (Symbol)】");
+console.log("[computed key (Symbol)]");
 const c1 = bench("", () => ({ [SYM]: function() {} }));
 const c2 = bench("", () => ({ [SYM]: () => {} }));
 const c3 = bench("", () => ({ [SYM]() {} }));
@@ -44,7 +44,7 @@ console.log(`  function: ${c1.toFixed(2)}ms`);
 console.log(`  arrow:    ${c2.toFixed(2)}ms`);
 console.log(`  method:   ${c3.toFixed(2)}ms`);
 
-console.log("\n【static key】");
+console.log("\n[static key]");
 const s1 = bench("", () => ({ foo: function() {} }));
 const s2 = bench("", () => ({ foo: () => {} }));
 const s3 = bench("", () => ({ foo() {} }));
@@ -53,12 +53,12 @@ console.log(`  arrow:    ${s2.toFixed(2)}ms`);
 console.log(`  method:   ${s3.toFixed(2)}ms`);
 
 // ========================================
-// 生成 + 呼び出しコスト
+// Creation + call cost
 // ========================================
 
-console.log("\n\n=== 生成 + 呼び出しコスト ===\n");
+console.log("\n\n=== Creation + call cost ===\n");
 
-console.log("【computed key (Symbol)】");
+console.log("[computed key (Symbol)]");
 const cc1 = benchCall("", () => ({ [SYM]: function() {} }), SYM);
 const cc2 = benchCall("", () => ({ [SYM]: () => {} }), SYM);
 const cc3 = benchCall("", () => ({ [SYM]() {} }), SYM);
@@ -66,7 +66,7 @@ console.log(`  function: ${cc1.toFixed(2)}ms`);
 console.log(`  arrow:    ${cc2.toFixed(2)}ms`);
 console.log(`  method:   ${cc3.toFixed(2)}ms`);
 
-console.log("\n【static key】");
+console.log("\n[static key]");
 const sc1 = benchCall("", () => ({ foo: function() {} }), 'foo');
 const sc2 = benchCall("", () => ({ foo: () => {} }), 'foo');
 const sc3 = benchCall("", () => ({ foo() {} }), 'foo');
@@ -75,23 +75,23 @@ console.log(`  arrow:    ${sc2.toFixed(2)}ms`);
 console.log(`  method:   ${sc3.toFixed(2)}ms`);
 
 // ========================================
-// 関数の特性による違いを探る
+// Exploring function characteristics
 // ========================================
 
-console.log("\n\n=== 関数の特性 ===\n");
+console.log("\n\n=== Function characteristics ===\n");
 
-// prototype の有無
+// Presence of prototype
 const objF = { [SYM]: function() {} };
 const objA = { [SYM]: () => {} };
 const objM = { [SYM]() {} };
 
-console.log("prototype の有無:");
+console.log("Has prototype:");
 console.log(`  function: ${objF[SYM].prototype !== undefined}`);
 console.log(`  arrow:    ${objA[SYM].prototype !== undefined}`);
 console.log(`  method:   ${objM[SYM].prototype !== undefined}`);
 
-// constructor として使えるか
-console.log("\nconstructor として使えるか:");
+// Can be used as constructor
+console.log("\nCan be used as constructor:");
 try {
   new objF[SYM]();
   console.log("  function: true");
@@ -106,32 +106,32 @@ try {
 } catch { console.log("  method:   false"); }
 
 // ========================================
-// prototype 生成コストの影響?
+// Impact of prototype creation cost?
 // ========================================
 
-console.log("\n\n=== prototype 生成コストの検証 ===\n");
+console.log("\n\n=== Prototype creation cost ===\n");
 
-// prototype を持つ function を大量生成
-const pf1 = bench("function (prototype あり)", () => {
+// Mass creation of functions with prototype
+const pf1 = bench("function (has prototype)", () => {
   return function() {};
 });
 
-// prototype を持たない arrow を大量生成
-const pf2 = bench("arrow (prototype なし)", () => {
+// Mass creation of arrows without prototype
+const pf2 = bench("arrow (no prototype)", () => {
   return () => {};
 });
 
-console.log(`  function (prototype あり): ${pf1.toFixed(2)}ms`);
-console.log(`  arrow (prototype なし):    ${pf2.toFixed(2)}ms`);
-console.log(`  差分: ${(pf1 - pf2).toFixed(2)}ms`);
+console.log(`  function (has prototype): ${pf1.toFixed(2)}ms`);
+console.log(`  arrow (no prototype):     ${pf2.toFixed(2)}ms`);
+console.log(`  difference: ${(pf1 - pf2).toFixed(2)}ms`);
 
 // ========================================
-// this バインディングの影響?
+// Impact of this binding?
 // ========================================
 
-console.log("\n\n=== this バインディングの検証 ===\n");
+console.log("\n\n=== this binding ===\n");
 
-// arrow は this をキャプチャする
+// Arrow captures this
 const outer = {
   value: 42,
   createArrow() {
@@ -156,10 +156,10 @@ console.log(`  method (closure):     ${tm.toFixed(2)}ms`);
 console.log(`  function (closure):   ${tf.toFixed(2)}ms`);
 
 // ========================================
-// 複数回実行で安定性確認
+// Multiple runs for stability check
 // ========================================
 
-console.log("\n\n=== 複数回実行 (3回平均) ===\n");
+console.log("\n\n=== Multiple runs (3-run average) ===\n");
 
 function avgBench(name, fn, runs = 3) {
   const results = [];
@@ -169,7 +169,7 @@ function avgBench(name, fn, runs = 3) {
   return results.reduce((a, b) => a + b, 0) / runs;
 }
 
-console.log("【computed key 生成コスト】");
+console.log("[computed key creation cost]");
 console.log(`  function: ${avgBench("", () => ({ [SYM]: function() {} })).toFixed(2)}ms`);
 console.log(`  arrow:    ${avgBench("", () => ({ [SYM]: () => {} })).toFixed(2)}ms`);
 console.log(`  method:   ${avgBench("", () => ({ [SYM]() {} })).toFixed(2)}ms`);

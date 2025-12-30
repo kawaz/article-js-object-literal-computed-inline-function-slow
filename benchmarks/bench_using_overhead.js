@@ -1,7 +1,7 @@
-// V8 vs JSC の using 構文の挙動比較
-// 発見: JSC では using 構文自体にオーバーヘッドがある
+// V8 vs JSC using syntax behavior comparison
+// Discovery: JSC has overhead for using syntax itself
 
-console.log("=== V8 vs JSC: using 構文の詳細比較 ===\n");
+console.log("=== V8 vs JSC: using syntax detailed comparison ===\n");
 console.log(`Runtime: ${typeof Bun !== 'undefined' ? 'Bun (JSC)' : 'Node (V8)'}\n`);
 
 const SYM = Symbol.dispose;
@@ -14,7 +14,7 @@ function createLiteral() {
   return { [SYM]() {} };
 }
 
-// 共有関数パターン
+// Shared function pattern
 const sharedDispose = () => {};
 function createShared() {
   return { [SYM]: sharedDispose };
@@ -23,7 +23,7 @@ function createShared() {
 const N = 100000;
 
 // ========================================
-// ベンチマーク関数群
+// Benchmark functions
 // ========================================
 
 function benchUsingClass() {
@@ -95,7 +95,7 @@ function benchSimpleShared() {
   return performance.now() - start;
 }
 
-// ウォームアップ
+// Warmup
 for (let i = 0; i < 5; i++) {
   benchUsingClass();
   benchTryFinallyClass();
@@ -108,7 +108,7 @@ for (let i = 0; i < 5; i++) {
 }
 
 // ========================================
-// 結果出力
+// Results output
 // ========================================
 
 console.log("=== class ===");
@@ -125,8 +125,8 @@ console.log("\n=== literal (shared function) ===");
 console.log(`  using:       ${benchUsingShared().toFixed(2)}ms`);
 console.log(`  simple:      ${benchSimpleShared().toFixed(2)}ms`);
 
-// using のオーバーヘッドを計算
-console.log("\n\n=== using のオーバーヘッド ===");
+// Calculate using overhead
+console.log("\n\n=== using overhead ===");
 const classUsing = benchUsingClass();
 const classSimple = benchSimpleClass();
 const literalUsing = benchUsingLiteral();
@@ -139,12 +139,12 @@ console.log(`  literal: using - simple = ${(literalUsing - literalSimple).toFixe
 console.log(`  shared:  using - simple = ${(sharedUsing - sharedSimple).toFixed(2)}ms`);
 
 // ========================================
-// using の純粋なオーバーヘッドを測定
+// Measuring pure using overhead
 // ========================================
 
-console.log("\n\n=== using の純粋なオーバーヘッド ===");
+console.log("\n\n=== Pure using overhead ===");
 
-// 空の dispose
+// Empty dispose
 class EmptyLock {
   [SYM]() {}
 }
@@ -165,7 +165,7 @@ function benchNoUsing() {
   return performance.now() - start;
 }
 
-// dispose を呼ばないパターン
+// Pattern without calling dispose
 function benchCreateOnly() {
   const start = performance.now();
   for (let i = 0; i < N; i++) {
@@ -187,5 +187,5 @@ const createOnly = benchCreateOnly();
 console.log(`  using obj = new EmptyLock():  ${usingEmpty.toFixed(2)}ms`);
 console.log(`  const obj = new EmptyLock():  ${noUsing.toFixed(2)}ms`);
 console.log(`  new EmptyLock() (unused):     ${createOnly.toFixed(2)}ms`);
-console.log(`  → using 構文のオーバーヘッド: ${(usingEmpty - noUsing).toFixed(2)}ms (${N}回)`);
-console.log(`  → 1回あたり: ${((usingEmpty - noUsing) / N * 1000000).toFixed(2)}ns`);
+console.log(`  -> using syntax overhead: ${(usingEmpty - noUsing).toFixed(2)}ms (${N} iterations)`);
+console.log(`  -> per call: ${((usingEmpty - noUsing) / N * 1000000).toFixed(2)}ns`);

@@ -1,0 +1,494 @@
+# オブジェクトリテラル内の computed property メソッドが遅い原因を追求した
+
+## 結論
+
+「オブジェクトリテラル」「computed property」「毎回新しい関数の生成」の **3条件が揃うと極端に遅くなる**。
+
+```javascript
+// 遅い（3条件が揃っている）
+function createLock() {
+  return {
+    [Symbol.dispose]() { ... }  // リテラル + computed + 毎回新関数
+  };
+}
+
+// 速い（いずれかの条件を外す）
+function createLock() {
+  const release = () => { ... };
+  return { [Symbol.dispose]: release };  // 共有関数
+}
+
+function createLock() {
+  const obj = {};
+  obj[Symbol.dispose] = function() { ... };  // 後付け
+  return obj;
+}
+
+class Lock {
+  [Symbol.dispose]() { ... }  // class
+}
+```
+
+-----
+
+## きっかけ
+
+[@vanilagy氏のポスト](https://x.com/vanilagy/status/1873797564551799014)で、ファクトリ関数内の `[Symbol.dispose]()` の行がプロファイラで 135.5ms と異常に遅いという報告がありました。class に書き換えたら劇的に改善したとのこと。
+
+```javascript
+// 遅かったコード
+function createLock() {
+  let released = false;
+  return {
+    release() {
+      if (released) return;
+      released = true;
+    },
+    [Symbol.dispose]() {    // ← 135.5ms
+      this.release();
+    }
+  };
+}
+```
+
+最初に思いついた仮説は以下の通り：
+
+1. クロージャが遅い？
+2. computed property（`[Symbol.dispose]`）が遅い？
+3. オブジェクトリテラルが遅い？
+4. メソッド定義が遅い？
+5. 毎回新しい関数を生成するのが遅い？
+
+これらを順に検証していきました。
+
+-----
+
+## 前提知識: Hidden Classes と Inline Cache
+
+検証の前に、JavaScript エンジンの最適化の仕組みを簡単に説明します。
+
+### Hidden Classes
+
+JavaScript は動的型付けですが、エンジンは内部的に「隠しクラス」を作ってオブジェクトの形状（Shape）を追跡しています。V8 では Maps、JSC では Structures と呼ばれます。
+
+```javascript
+const obj = {};      // Shape S0 (空)
+obj.x = 1;           // Shape S0 → S1 (x を持つ)
+obj.y = 2;           // Shape S1 → S2 (x, y を持つ)
+```
+
+同じ順序でプロパティを追加したオブジェクトは同じ Shape を共有でき、これによりプロパティアクセスが最適化されます。
+
+なお、オブジェクトリテラルで一発生成する場合は transition が発生せず、最初から最終的な Shape が決まるため最も効率的です。
+
+### Inline Cache (IC)
+
+プロパティアクセスや関数呼び出しの結果をキャッシュして、次回以降の検索をスキップする最適化です。
+
+```javascript
+function call(obj) {
+  obj.dispose();  // ← ここに IC が仕込まれる
+}
+```
+
+IC は「常に同じ Shape / 同じ関数が来る」と仮定して最適化します。異なるものが来ると最適化が解除（Deoptimization）されます。
+
+### Deoptimization (Deopt)
+
+JIT コンパイラが最適化時に置いた仮定が崩れると、最適化されたコードを捨てて遅いコードに戻ります。
+
+```
+最適化「この呼び出しでは常に関数Aが呼ばれるはず」
+    ↓
+実際は関数Bが来た
+    ↓
+"wrong call target" で Deopt
+    ↓
+再最適化を試みる → また違う関数 → Deopt...
+```
+
+-----
+
+## 検証1: 何が遅さの原因か切り分ける
+
+まず、どの条件が遅さに寄与しているか総当たりで検証しました。
+
+### 検証コード
+
+```javascript
+const SYM = Symbol("dispose");
+const sharedFn = function() {};
+
+// リテラル + computed + 毎回新関数
+function literalComputedNewFn() {
+  return { [SYM]() {} };
+}
+
+// リテラル + computed + 共有関数
+function literalComputedSharedFn() {
+  return { [SYM]: sharedFn };
+}
+
+// リテラル + 静的キー + 毎回新関数
+function literalStaticNewFn() {
+  return { dispose() {} };
+}
+
+// リテラル + 静的キー + 共有関数
+function literalStaticSharedFn() {
+  return { dispose: sharedFn };
+}
+
+// 後付け + computed + 毎回新関数
+function addLaterComputedNewFn() {
+  const obj = {};
+  obj[SYM] = function() {};
+  return obj;
+}
+
+// 後付け + computed + 共有関数
+function addLaterComputedSharedFn() {
+  const obj = {};
+  obj[SYM] = sharedFn;
+  return obj;
+}
+
+// class
+class WithClass {
+  [SYM]() {}
+}
+```
+
+### 結果: 生成 + 呼び出し（10万回）
+
+| パターン | V8 (Node) | JSC (Bun) |
+|---|---|---|
+| **リテラル + computed + 毎回新関数** | **30.12ms** | **13.22ms** |
+| リテラル + computed + 共有関数 | 4.30ms | 2.52ms |
+| リテラル + 静的キー + 毎回新関数 | 2.88ms | 3.80ms |
+| リテラル + 静的キー + 共有関数 | 2.59ms | 1.32ms |
+| 後付け + computed + 毎回新関数 | 4.19ms | 2.06ms |
+| 後付け + computed + 共有関数 | 2.30ms | 2.02ms |
+| class + computed | 3.86ms | 3.20ms |
+
+### 発見
+
+「リテラル + computed + 毎回新関数」の組み合わせだけが突出して遅いです。
+
+条件を一つでも外すと速くなります：
+
+- 共有関数にする → 速い
+- 後付けにする → 速い
+- 静的キーにする → 速い
+- class にする → 速い
+
+-----
+
+## 検証2: クロージャは関係あるか
+
+クロージャが原因という仮説を検証しました。
+
+```javascript
+// クロージャあり
+function withClosure() {
+  let state = false;
+  return {
+    [Symbol.dispose]() { state = true; }
+  };
+}
+
+// クロージャなし
+function withoutClosure() {
+  return {
+    [Symbol.dispose]() {}
+  };
+}
+```
+
+結果: どちらも同様に遅い。**クロージャは無関係**でした。
+
+-----
+
+## 検証3: function / arrow / method の違い
+
+関数の書き方による違いを検証しました。
+
+```javascript
+// メソッド記法
+{ [SYM]() {} }
+
+// function
+{ [SYM]: function() {} }
+
+// arrow
+{ [SYM]: () => {} }
+```
+
+| パターン | V8 | JSC |
+|---|---|---|
+| computed + function | 28.44ms | 21.44ms |
+| computed + arrow | 31.16ms | 19.15ms |
+| computed + method | 32.09ms | 12.69ms |
+
+結果: どれも同様に遅い。**関数の書き方は無関係**でした。
+
+-----
+
+## 検証4: プリミティブ値なら問題ないか
+
+毎回新しい値でも、関数以外なら遅くならないのか検証しました。
+
+```javascript
+let counter = 0;
+
+// 毎回新しい数値
+function createWithNewNumber() {
+  return { [SYM]: counter++ };
+}
+
+// 毎回新しい関数
+function createWithNewFunction() {
+  return { [SYM]: function() {} };
+}
+```
+
+| パターン | V8（生成+アクセス） | V8（生成+呼び出し） |
+|---|---|---|
+| 毎回新しい数値 | 2.15ms | - |
+| 毎回新しい関数 | 29.88ms | **89.59ms** |
+
+結果: **関数の場合だけ遅い**。さらに、参照するだけなら 30ms 程度ですが、呼び出すと 90ms に跳ね上がります。
+
+-----
+
+## 検証5: なぜ「呼び出し」で遅くなるか
+
+V8 のトレースオプションで Deoptimization の発生を確認しました。
+
+```bash
+node --trace-opt --trace-deopt bench.js
+```
+
+出力（抜粋）:
+```
+[bailout (kind: deopt-eager, reason: wrong call target): ...]
+[bailout (kind: deopt-eager, reason: wrong call target): ...]
+```
+
+`wrong call target`（呼び出し先が想定と違う）という理由で Deopt が繰り返し発生していました。
+
+毎回新しい関数オブジェクトが生成されるため、JIT が「この関数が呼ばれるはず」と最適化しても、実際には別の関数が来て Deopt が発生します。これが繰り返されることで大幅に遅くなります。
+
+-----
+
+## 検証6: 関数を共有すれば速くなるか
+
+同じ関数オブジェクトを使い回せば Deopt を回避できるはずです。
+
+```javascript
+// 遅い: 毎回新しい関数
+function createLock() {
+  let released = false;
+  return {
+    release() { if (released) return; released = true; },
+    [Symbol.dispose]() { this.release(); }
+  };
+}
+
+// 速い: release と dispose で同じ関数を共有
+function createLock() {
+  let released = false;
+  const release = () => { if (released) return; released = true; };
+  return { release, [Symbol.dispose]: release };
+}
+```
+
+| パターン | V8 |
+|---|---|
+| 毎回新関数 | 36.23ms |
+| **関数を共有** | **4.14ms** |
+| class | 4.49ms |
+
+結果: **約9倍高速化**。class と同等の速度になりました。
+
+-----
+
+## 検証7: using 構文や try-finally は関係あるか
+
+元のコードは `using` 構文で使うことを想定していたようです。構文自体が遅さの原因か検証しました。
+
+```javascript
+// using 構文
+{ using lock = createLock(); }
+
+// try-finally
+const lock = createLock();
+try { } finally { lock[Symbol.dispose](); }
+
+// 単純なループ
+const lock = createLock();
+lock[Symbol.dispose]();
+```
+
+| パターン | Bun (literal) | Bun (class) |
+|---|---|---|
+| using | 25.31ms | 13.87ms |
+| try-finally | 24.96ms | 2.38ms |
+| simple loop | 23.28ms | 2.38ms |
+
+結果: **構文による差はほぼない**。遅さの原因は構文ではなくオブジェクト生成パターンです。
+
+-----
+
+## 検証8: 135ms の謎
+
+元ポストでは 135.5ms という数字でしたが、こちらの検証では最大でも 30〜90ms 程度でした。
+
+長時間実行でバッチごとの時間を計測したところ：
+
+```
+literal computed: 83.1, 28.7, 30.2, 29.2, 27.2ms
+class:            3.3,  2.7,  2.7,  2.5,  1.1ms
+```
+
+最初のバッチで 83ms と突出しています。これは JIT コンパイルと Deopt の繰り返しによる初期化コストです。
+
+DevTools のプロファイラはこの Deopt コストを「その行」に集約して表示するため、実際より大きく見えることがあります。135ms はプロファイラのオーバーヘッドや他の要因も含まれていると考えられます。
+
+-----
+
+## なぜ「リテラル + computed + 毎回新関数」だけ遅いのか
+
+3条件が揃うと V8 の特定の最適化パスを外れるようです。
+
+- **後付け**なら、静的な Shape を作ってから既知の transition で追加するため最適化が効く
+- **静的キー**なら、リテラル解析時に Shape を決定できるため最適化が効く
+- **共有関数**なら、呼び出し先が常に同じなので IC が安定する
+- **class** なら、プロトタイプ上の同一関数を共有するので IC が安定する
+
+「リテラル + computed + 毎回新関数」の場合：
+1. computed property のためリテラル解析時に Shape を決定できない
+2. 毎回新しい関数オブジェクトが生成される
+3. 呼び出しのたびに `wrong call target` で Deopt
+4. 最適化 → Deopt → 再最適化 の繰り返し
+
+-----
+
+## まとめ
+
+| 仮説 | 結果 |
+|---|---|
+| クロージャが遅い | ❌ 無関係 |
+| computed property が遅い | △ 単独では問題ない |
+| オブジェクトリテラルが遅い | △ 単独では問題ない |
+| メソッド定義が遅い | △ 単独では問題ない |
+| function/arrow/method の違い | ❌ 無関係 |
+| using 構文が遅い | ❌ 無関係 |
+| **3条件の組み合わせ** | ✅ **これが原因** |
+
+遅くなる条件: **「リテラル」+「computed property」+「毎回新しい関数の生成と呼び出し」**
+
+-----
+
+## 解決策
+
+```javascript
+// ❌ 遅い
+function createLock() {
+  return {
+    [Symbol.dispose]() { ... }
+  };
+}
+
+// ✅ 速い: 関数を共有
+function createLock() {
+  const release = () => { ... };
+  return { release, [Symbol.dispose]: release };
+}
+
+// ✅ 速い: モジュールレベルで関数定義
+const dispose = function() { this.release(); };
+function createLock() {
+  return { release() { ... }, [Symbol.dispose]: dispose };
+}
+
+// ✅ 速い: 後付け
+function createLock() {
+  const obj = { release() { ... } };
+  obj[Symbol.dispose] = function() { this.release(); };
+  return obj;
+}
+
+// ✅ 速い: class
+class Lock {
+  [Symbol.dispose]() { ... }
+}
+```
+
+-----
+
+## 補足: オブジェクト構築のベストプラクティス
+
+今回の検証を踏まえて、オブジェクト構築時の transition chain についてまとめます。
+
+### 基本: リテラル一発生成がベスト
+
+```javascript
+// 最適: transition が発生しない
+const obj = { a: 1, b: 2, c: 3 };
+
+// 次点: transition は発生するが、同じパターンならキャッシュが効く
+const obj = {};
+obj.a = 1;
+obj.b = 2;
+obj.c = 3;
+```
+
+後者はプロパティ追加のたびに Shape が遷移しますが、これは最初の Shape 生成時だけの話です。同じパターンで2個目以降を作るときは既存のチェーンを再利用するため、大量生成でもそこまで問題になりません。
+
+### 例外: computed property は後付けにする
+
+ただし computed property がある場合は話が変わります。
+
+```javascript
+// ❌ 避ける: リテラル内に computed property + 関数
+function create() {
+  return {
+    staticMethod() { ... },
+    [Symbol.dispose]() { ... }  // これが問題
+  };
+}
+
+// ✅ 推奨: 静的プロパティはリテラルで、動的プロパティは後付け
+function create() {
+  const obj = { staticMethod() { ... } };  // 静的部分はリテラル
+  obj[Symbol.dispose] = function() { ... };  // 動的部分は後付け
+  return obj;
+}
+```
+
+特に computed property の値が関数オブジェクトである場合、現状の V8 / JSC の最適化では「リテラル + computed + 毎回新関数」の組み合わせで大幅な性能劣化が発生します。この組み合わせは避けるべきです。
+
+### まとめ
+
+| 状況 | 推奨 |
+|---|---|
+| 静的プロパティのみ | リテラル一発生成 |
+| computed property あり（値が関数以外） | リテラル一発でも問題なし |
+| computed property あり（値が関数） | 静的部分はリテラル、動的部分は後付け or class |
+
+-----
+
+## 参考資料
+
+### V8 公式
+- [Fast properties in V8](https://v8.dev/blog/fast-properties)
+- [Maps (Hidden Classes) in V8](https://v8.dev/docs/hidden-classes)
+
+### 解説記事
+- [JavaScript engine fundamentals: Shapes and Inline Caches](https://mathiasbynens.be/notes/shapes-ics) - Mathias Bynens
+- [JavaScript Engines Hidden Classes](https://draft.li/blog/2016/12/22/javascript-engines-hidden-classes/)
+- [V8 Hidden class](https://engineering.linecorp.com/en/blog/v8-hidden-class) - LINE Engineering
+
+### JSC
+- [JavaScriptCore - WebKit Documentation](https://docs.webkit.org/Deep%20Dive/JSC/JavaScriptCore.html)

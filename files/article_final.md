@@ -4,18 +4,22 @@
 
 「オブジェクトリテラル」「computed property」「メソッド定義(関数生成)」の3条件が揃うと極端に遅くなる。
 
-```javascript
+```ts
 // 遅い（3条件が揃っている）
 function createLock() {
   return {
     [Symbol.dispose]() { ... }  // リテラル + computed + 毎回新関数
   };
 }
+```
 
+対応としては3条件のどれかを外す形に直してやれば良い。
+
+```ts
 // 速い（いずれかの条件を外す）
 function createLock() {
   const release = () => { ... };
-  return { [Symbol.dispose]: release };  // 共有関数
+  return { [Symbol.dispose]: release };  // 関数を事前定義
 }
 
 function createLock() {
@@ -33,7 +37,7 @@ class Lock {
 
 ## きっかけ
 
-[@vanilagy氏のポスト](https://x.com/vanilagy/status/1873797564551799014)で、ファクトリ関数内の `[Symbol.dispose]()` の行がプロファイラで 135.5ms と異常に遅いという報告がありました。class に書き換えたら劇的に改善したとのこと。
+[@vanilagy氏のポスト](https://x.com/vanilagy/status/2005003400023593125)で、ファクトリ関数内の `[Symbol.dispose]()` の行がプロファイラで 135.5ms と異常に遅いという報告があり。その後 class に書き換えたら劇的に改善したとのことでした。
 
 ```javascript
 // 遅かったコード
@@ -51,7 +55,7 @@ function createLock() {
 }
 ```
 
-最初に思いついた仮説は以下の通り：
+最初に思いついた仮説は以下の通り
 
 1. クロージャが遅い？
 2. computed property（`[Symbol.dispose]`）が遅い？

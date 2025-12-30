@@ -179,6 +179,24 @@ class WithClass {
 | 後付け + computed + 共有関数 | 2.30ms | 2.02ms |
 | class + computed | 3.86ms | 3.20ms |
 
+<details>
+<summary>ベンチマーク実行方法</summary>
+
+```bash
+# Node.js (V8)
+node benchmarks/bench_fn_types.js
+
+# Bun (JSC)
+bun benchmarks/bench_fn_types.js
+
+# V8 deopt トレース付き
+node --trace-opt --trace-deopt benchmarks/bench_fn_types.js
+```
+
+→ [benchmarks/bench_fn_types.js](benchmarks/bench_fn_types.js)
+
+</details>
+
 ### 発見
 
 「リテラル + computed + 毎回新関数」の組み合わせだけが突出して遅い。
@@ -237,6 +255,18 @@ function withoutClosure() {
 | computed + function | 28.44ms | 21.44ms |
 | computed + arrow | 31.16ms | 19.15ms |
 | computed + method | 32.09ms | 12.69ms |
+
+<details>
+<summary>ベンチマーク実行方法</summary>
+
+```bash
+node benchmarks/bench_fn_types.js
+bun benchmarks/bench_fn_types.js
+```
+
+→ [benchmarks/bench_fn_types.js](benchmarks/bench_fn_types.js)
+
+</details>
 
 結果: どれも同様に遅い。**関数の書き方は無関係**だった。
 
@@ -343,6 +373,17 @@ lock[Symbol.dispose]();
 | using | 25.31ms | 13.87ms |
 | try-finally | 24.96ms | 2.38ms |
 | simple loop | 23.28ms | 2.38ms |
+
+<details>
+<summary>ベンチマーク実行方法</summary>
+
+```bash
+bun benchmarks/bench_jsc_using.js
+```
+
+→ [benchmarks/bench_jsc_using.js](benchmarks/bench_jsc_using.js)
+
+</details>
 
 結果: **構文による差はほぼない**。遅さの原因は構文ではなくオブジェクト生成パターンだ。
 

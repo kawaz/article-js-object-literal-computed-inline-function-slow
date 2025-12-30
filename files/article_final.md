@@ -70,7 +70,7 @@ function createLock() {
 
 ## 前提知識: Hidden Classes と Inline Cache
 
-検証の前に、JavaScript エンジンの最適化の仕組みを簡単に説明します。
+検証の前に、JavaScript エンジンの最適化の仕組みを簡単に説明します。（今回の現象解読のために初めて調べた内容なので間違いがあるかもしれないが、自分の理解のまとめです）
 
 ### Hidden Classes
 

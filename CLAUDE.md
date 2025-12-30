@@ -1,23 +1,26 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## 概要
 
-Claudeセッションのアーカイブ。JavaScriptエンジンのパフォーマンス問題を調査した記録。主な発見: **オブジェクトリテラル + computed property + メソッド定義は約10倍遅い**（V8/JSCのdeoptimizationが原因）。
+JavaScriptエンジンのパフォーマンス問題を調査・検証した記録。
+
+主な発見: **「オブジェクトリテラル」+「computed property」+「メソッド定義」の組み合わせは約10倍遅い**（V8/JSCのdeoptimizationが原因）。
+
+## 作業時の指示
+
+- **記事の文体**: 日本語版は「だ・である」調で統一。ただし括弧内は筆者の内心・補足を表すため、断定調と異なることがある
+- **コード内コメント**: 英語で記述
+- **ユーザーが修正した場合**: 差分を確認し、良い点・気になる点を含めて評価すること
 
 ## リポジトリ構成
 
 ```
-article-object-literal-computed-property-method-definition-performance.md  # 技術記事
-benchmarks/          # ベンチマークスクリプト
-  bench_fn_types.js
-  bench_jsc_deep.js
-  bench_jsc_using.js
-  bench_using_overhead.js
-eslint-plugin/       # 問題パターンを検出するESLintプラグイン
-session/             # 元のClaudeセッション記録
-drafts/              # 旧バージョン・下書き
+article-...-performance.md     # 技術記事（英語版）
+article-...-performance.ja.md  # 技術記事（日本語版）
+benchmarks/                    # ベンチマークスクリプト
+eslint-plugin/                 # 問題パターン検出用ESLintプラグイン
+session/                       # 元のClaudeセッション記録
+drafts/                        # 旧バージョン・下書き
 ```
 
 ## ベンチマーク実行
@@ -35,29 +38,9 @@ node --trace-opt --trace-deopt benchmarks/bench_fn_types.js
 
 ## 技術的発見
 
-**「オブジェクトリテラル」+「computed property」+「毎回新しい関数」** の組み合わせでJIT deoptimizationが発生:
+「リテラル + computed + 毎回新関数」の組み合わせで `wrong call target` deoptが繰り返し発生し、大幅に遅くなる。
 
-```javascript
-// 遅い（約10倍）: 毎回新関数、"wrong call target" deoptが発生
-function createLock() {
-  return { [Symbol.dispose]() { ... } };
-}
-
-// 速い: 関数を共有
-function createLock() {
-  const release = () => { ... };
-  return { [Symbol.dispose]: release };
-}
-
-// 速い: class（プロトタイプメソッドは共有される）
-class Lock {
-  [Symbol.dispose]() { ... }
-}
-
-// 速い: オブジェクト生成後にプロパティ追加
-function createLock() {
-  const obj = {};
-  obj[Symbol.dispose] = function() { ... };
-  return obj;
-}
-```
+**解決策**（いずれかの条件を外す）:
+- 関数を共有する
+- オブジェクト生成後にプロパティを追加する
+- classを使う

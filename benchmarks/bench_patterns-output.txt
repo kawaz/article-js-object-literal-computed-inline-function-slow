@@ -6,31 +6,31 @@ Runtime: Node (V8)
 
 --- 100K (100,000 iterations) ---
 
-**literal + computed + new fn             16.31ms
-  literal + computed + shared fn           3.07ms
-  literal + static + new fn                1.89ms
-  literal + static + shared fn             1.27ms
-  add-later + computed + new fn            2.74ms
-  add-later + computed + shared fn         1.67ms
-  add-later + static + new fn              2.86ms
-  add-later + static + shared fn           1.42ms
-  class                                    1.57ms
+**literal + computed + new fn             19.03ms
+  literal + computed + shared fn           3.72ms
+  literal + static + new fn                2.23ms
+  literal + static + shared fn             1.57ms
+  add-later + computed + new fn            3.44ms
+  add-later + computed + shared fn         1.87ms
+  add-later + static + new fn              3.41ms
+  add-later + static + shared fn           2.01ms
+  class                                    1.64ms
 
-  Ratio (literal+computed+newFn / class): 10.4x
+  Ratio (literal+computed+newFn / class): 11.6x
 
 --- 10M (10,000,000 iterations) ---
 
-**literal + computed + new fn           1652.77ms
-  literal + computed + shared fn         134.85ms
-  literal + static + new fn              151.45ms
-  literal + static + shared fn           125.74ms
-  add-later + computed + new fn          168.53ms
-  add-later + computed + shared fn       133.94ms
-  add-later + static + new fn            170.72ms
-  add-later + static + shared fn         136.34ms
-  class                                  141.71ms
+**literal + computed + new fn           1735.75ms
+  literal + computed + shared fn         134.84ms
+  literal + static + new fn              155.08ms
+  literal + static + shared fn           127.26ms
+  add-later + computed + new fn          168.26ms
+  add-later + computed + shared fn       136.30ms
+  add-later + static + new fn            173.28ms
+  add-later + static + shared fn         135.44ms
+  class                                  144.30ms
 
-  Ratio (literal+computed+newFn / class): 11.7x
+  Ratio (literal+computed+newFn / class): 12.0x
 
 === Bun (JSC) ===
 === Test 1: Object creation pattern combinations ===
@@ -40,28 +40,28 @@ Runtime: Bun (JSC)
 
 --- 100K (100,000 iterations) ---
 
-**literal + computed + new fn              5.92ms
-  literal + computed + shared fn           1.09ms
-  literal + static + new fn                1.67ms
-  literal + static + shared fn             1.08ms
-  add-later + computed + new fn            1.16ms
-  add-later + computed + shared fn         1.15ms
-  add-later + static + new fn              1.70ms
-  add-later + static + shared fn           1.38ms
-  class                                    1.61ms
+**literal + computed + new fn              7.72ms
+  literal + computed + shared fn           1.48ms
+  literal + static + new fn                2.51ms
+  literal + static + shared fn             1.32ms
+  add-later + computed + new fn            1.60ms
+  add-later + computed + shared fn         1.46ms
+  add-later + static + new fn              2.39ms
+  add-later + static + shared fn           1.70ms
+  class                                    2.26ms
 
-  Ratio (literal+computed+newFn / class): 3.7x
+  Ratio (literal+computed+newFn / class): 3.4x
 
 --- 10M (10,000,000 iterations) ---
 
-**literal + computed + new fn            533.57ms
-  literal + computed + shared fn          77.28ms
-  literal + static + new fn              117.27ms
-  literal + static + shared fn            80.50ms
-  add-later + computed + new fn          135.46ms
-  add-later + computed + shared fn        61.55ms
-  add-later + static + new fn            125.25ms
-  add-later + static + shared fn          68.64ms
-  class                                   85.64ms
+**literal + computed + new fn            572.46ms
+  literal + computed + shared fn          80.89ms
+  literal + static + new fn              124.71ms
+  literal + static + shared fn            80.78ms
+  add-later + computed + new fn          139.58ms
+  add-later + computed + shared fn        63.31ms
+  add-later + static + new fn            128.78ms
+  add-later + static + shared fn          69.57ms
+  class                                   88.23ms
 
-  Ratio (literal+computed+newFn / class): 6.2x
+  Ratio (literal+computed+newFn / class): 6.5x

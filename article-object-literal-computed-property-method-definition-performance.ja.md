@@ -405,15 +405,26 @@ bun run --cpu-prof benchmarks/bench_patterns.js
 
 | 関数 | 行 | hitCount | 割合 |
 |---|---|---|---|
-| `literalComputedNewFn` | 12 (`return { [SYM]() {} }`) | **403** | **39.2%** |
-| `addLaterComputedSharedFn` | 35 | 32 | 3.1% |
-| `literalStaticNewFn` | 19 | 29 | 2.8% |
-| `addLaterComputedNewFn` | 29 | 26 | 2.5% |
-| `literalComputedSharedFn` | 16 | 21 | 2.0% |
+| `literalComputedNewFn` | 13 (`[SYM]() {}`) | **459** | **39.8%** |
+| `addLaterStaticNewFn` | 44 | 43 | 3.7% |
+| `literalStaticNewFn` | 22 | 34 | 2.9% |
+| `addLaterComputedNewFn` | 32 | 29 | 2.5% |
+| `literalComputedSharedFn` | 19 | 21 | 1.8% |
 
-※プロファイル合計時間: 約1.3秒（10万回 + 1000万回）、総サンプル数: 約1000
+※プロファイル合計時間: 約1.5秒（10万回 + 1000万回）、総サンプル数: 約1150
 
-12行目の `return { [SYM]() {} };` が突出して遅い。これは元のXポストで「`[Symbol.dispose]()` の行が 135.5ms」と報告されていた内容と一致する。V8のような詳細なdeopt情報は取れないが、JSC でも同様の最適化阻害が発生していることが確認できた。
+ベンチマークコードは元々1行だった `return { [SYM]() {} };` を以下のように改行して確認した:
+
+```javascript
+function literalComputedNewFn() {
+  const obj = {      // 12行目
+    [SYM]() {}       // 13行目 ← ここがホットスポット
+  };                 // 14行目
+  return obj;        // 15行目
+}
+```
+
+結果、12行目の `const obj = {` でも15行目の `return obj;` でもなく、**13行目の `[SYM]() {}` がホットスポット**であることが確認できた。これは元のXポストで「`[Symbol.dispose]()` の行が 135.5ms」と報告されていた内容と完全に一致する。V8のような詳細なdeopt情報は取れないが、JSC でも同様の最適化阻害が発生していることが確認できた。
 
 <details>
 <summary>プロファイル解析の手順</summary>
@@ -431,13 +442,13 @@ node benchmarks/analyze_profile.js benchmarks/bench_patterns.cpuprofile
 出力例:
 ```
 Profile: benchmarks/bench_patterns.cpuprofile
-Total samples: 1029
-Total time: 1.33 seconds
+Total samples: 1154
+Total time: 1.47 seconds
 
 Function                       | File                 | Line | hitCount | %
-literalComputedNewFn           | bench_patterns.js    |   12 |      403 | 39.2%
-benchWithCall                  | bench_patterns.js    |   74 |      263 | 25.6%
-literalStaticNewFn             | bench_patterns.js    |   19 |       29 | 2.8%
+literalComputedNewFn           | bench_patterns.js    |   13 |      459 | 39.8%
+benchWithCall                  | bench_patterns.js    |   77 |      297 | 25.7%
+literalStaticNewFn             | bench_patterns.js    |   22 |       34 | 2.9%
 ...
 ```
 

@@ -1,21 +1,21 @@
 Profile: benchmarks/bench_patterns.cpuprofile
-Total samples: 1029
-Total time: 1.33 seconds
+Total samples: 1157
+Total time: 1.48 seconds
 
 Function | File | Line | hitCount | %
 ---------|------|------|----------|---
-literalComputedNewFn           | bench_patterns.js    |   12 |      403 | 39.2%
-benchWithCall                  | bench_patterns.js    |   74 |      263 | 25.6%
-benchWithCall                  | bench_patterns.js    |   75 |      129 | 12.5%
-addLaterComputedSharedFn       | bench_patterns.js    |   35 |       32 | 3.1%
-literalStaticNewFn             | bench_patterns.js    |   19 |       29 | 2.8%
-addLaterComputedNewFn          | bench_patterns.js    |   29 |       26 | 2.5%
-addLaterStaticSharedFn         | bench_patterns.js    |   47 |       26 | 2.5%
-literalComputedSharedFn        | bench_patterns.js    |   16 |       21 | 2.0%
-literalStaticSharedFn          | bench_patterns.js    |   24 |       21 | 2.0%
-addLaterStaticNewFn            | bench_patterns.js    |   41 |       21 | 2.0%
-WithClass                      |                      |    1 |       20 | 1.9%
-toLocaleString                 |                      |   -1 |        8 | 0.8%
-dispose                        | bench_patterns.js    |   -1 |        8 | 0.8%
-sharedFn                       | bench_patterns.js    |   -1 |        6 | 0.6%
-benchWithCall                  | bench_patterns.js    |   73 |        5 | 0.5%
+literalComputedNewFn           | bench_patterns.js    |   13 |      431 | 37.3%
+benchWithCall                  | bench_patterns.js    |   77 |      324 | 28.0%
+benchWithCall                  | bench_patterns.js    |   78 |      142 | 12.3%
+addLaterComputedNewFn          | bench_patterns.js    |   32 |       36 | 3.1%
+addLaterStaticNewFn            | bench_patterns.js    |   44 |       34 | 2.9%
+addLaterComputedSharedFn       | bench_patterns.js    |   38 |       32 | 2.8%
+literalStaticNewFn             | bench_patterns.js    |   22 |       29 | 2.5%
+WithClass                      |                      |    1 |       29 | 2.5%
+literalComputedSharedFn        | bench_patterns.js    |   19 |       22 | 1.9%
+literalStaticSharedFn          | bench_patterns.js    |   27 |       22 | 1.9%
+addLaterStaticSharedFn         | bench_patterns.js    |   50 |       20 | 1.7%
+dispose                        | bench_patterns.js    |   -1 |       12 | 1.0%
+toLocaleString                 |                      |   -1 |        8 | 0.7%
+benchWithCall                  | bench_patterns.js    |   76 |        5 | 0.4%
+sharedFn                       | bench_patterns.js    |   -1 |        5 | 0.4%

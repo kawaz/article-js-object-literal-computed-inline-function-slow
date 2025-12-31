@@ -9,7 +9,10 @@ const sharedFn = function() {};
 
 // Pattern functions
 function literalComputedNewFn() {
-  return { [SYM]() {} };
+  const obj = {
+    [SYM]() {}
+  };
+  return obj;
 }
 
 function literalComputedSharedFn() {

@@ -309,6 +309,7 @@ bun benchmarks/bench_fn_types.js   # Bun (JSC)
 毎回新しい値でも、値が関数以外の場合はどうなるかも検証。
 
 ```javascript
+const SYM = Symbol("test");
 let counter = 0;
 
 // 毎回新しい数値
@@ -320,14 +321,27 @@ function createWithNewNumber() {
 function createWithNewFunction() {
   return { [SYM]: function() {} };
 }
+
+// アクセス（参照のみ）
+let x;
+for (let i = 0; i < n; i++) {
+  const obj = createFn();
+  x = obj[SYM];
+}
+
+// 呼び出し（関数実行）
+for (let i = 0; i < n; i++) {
+  const obj = createFn();
+  obj[SYM]();
+}
 ```
 
-| パターン | V8（生成+アクセス） |
-|---|---|
-| 毎回新しい数値 | 1.26ms |
-| 毎回新しい関数 | 17.01ms |
+| パターン | V8（アクセス） | V8（呼び出し） | Bun（アクセス） | Bun（呼び出し） |
+|---|---|---|---|---|
+| 毎回新しい数値 | 1.36ms | - | 0.96ms | - |
+| 毎回新しい関数 | 16.21ms | 16.05ms | 5.20ms | 5.20ms |
 
-結果: **関数の場合だけ遅い**（約14倍）。プリミティブ値なら問題ない。
+結果: **関数の場合だけ遅い**（V8で約12倍、Bunで約5倍）。プリミティブ値なら問題ない。アクセスと呼び出しはほぼ同じ速度。
 
 <details>
 <summary>ベンチマーク実行方法</summary>

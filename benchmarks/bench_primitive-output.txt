@@ -5,25 +5,25 @@ Runtime: Node (V8)
 
 --- 100K (100,000 iterations) ---
 
-  number (void):          1.92ms
-  number (assign):        1.26ms
-  number (accum):        10.25ms
-  function (void):       17.14ms
-  function (assign):     17.01ms
-  function (accum):      17.18ms
-  function (call):       16.64ms
+  number (void):          1.91ms
+  number (assign):        1.36ms
+  number (accum):         9.70ms
+  function (void):       16.31ms
+  function (assign):     16.21ms
+  function (accum):      17.08ms
+  function (call):       16.05ms
 
   -> Function values are slow regardless of access method.
 
 --- 1M (1,000,000 iterations) ---
 
-  number (void):          8.48ms
-  number (assign):        7.70ms
-  number (accum):        12.81ms
-  function (void):      166.38ms
-  function (assign):    167.96ms
-  function (accum):     171.58ms
-  function (call):      158.42ms
+  number (void):          7.88ms
+  number (assign):        7.37ms
+  number (accum):        12.09ms
+  function (void):      159.67ms
+  function (assign):    160.03ms
+  function (accum):     166.15ms
+  function (call):      162.23ms
 
   -> Function values are slow regardless of access method.
 
@@ -35,25 +35,25 @@ Runtime: Bun (JSC)
 
 --- 100K (100,000 iterations) ---
 
-  number (void):          1.34ms
-  number (assign):        0.98ms
-  number (accum):         1.63ms
-  function (void):        6.10ms
-  function (assign):      5.37ms
-  function (accum):       5.87ms
-  function (call):        5.40ms
+  number (void):          1.41ms
+  number (assign):        0.96ms
+  number (accum):         1.59ms
+  function (void):        6.09ms
+  function (assign):      5.20ms
+  function (accum):       5.56ms
+  function (call):        5.20ms
 
   -> Function values are slow regardless of access method.
 
 --- 1M (1,000,000 iterations) ---
 
-  number (void):          6.56ms
-  number (assign):        5.55ms
-  number (accum):        10.59ms
-  function (void):       52.23ms
-  function (assign):     54.35ms
-  function (accum):      56.23ms
-  function (call):       47.84ms
+  number (void):          6.66ms
+  number (assign):        5.13ms
+  number (accum):        10.45ms
+  function (void):       50.74ms
+  function (assign):     50.64ms
+  function (accum):      53.90ms
+  function (call):       47.23ms
 
   -> Function values are slow regardless of access method.
 

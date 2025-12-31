@@ -477,7 +477,7 @@ node benchmarks/analyze_profile.js benchmarks/bench_patterns-jsc.cpuprofile
 
 -----
 
-### 検証6: 関数の渡し方による違い
+### 検証6: 関数の定義の仕方や渡し方による違いの確認
 
 検証1で「共有関数にすると速い」と分かったが、より詳細に切り分けを行った。
 

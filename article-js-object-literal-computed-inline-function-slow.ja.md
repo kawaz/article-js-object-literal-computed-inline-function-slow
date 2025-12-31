@@ -307,7 +307,7 @@ bun benchmarks/bench_fn_types.js   # Bun (JSC)
 
 -----
 
-### 検証4: 値がプリミティブ値の場合はどうなるか
+### 検証4: computed property + 値がプリミティブ値の場合はどうなるか
 
 毎回新しい値でも、値が関数以外の場合はどうなるかも検証。
 

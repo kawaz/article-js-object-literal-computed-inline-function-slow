@@ -223,17 +223,12 @@ class WithClass {
 | class | 144ms | 90ms |
 | **倍率（class比）** | **約12倍** | **約6倍** |
 
-<details>
-<summary>ベンチマーク実行方法</summary>
-
 ```bash
 node benchmarks/bench_patterns.js  # Node.js (V8)
 bun benchmarks/bench_patterns.js   # Bun (JSC)
 ```
 
 → [bench_patterns.js](benchmarks/bench_patterns.js) / [実行結果](benchmarks/bench_patterns-output.txt)
-
-</details>
 
 #### 発見
 
@@ -271,17 +266,12 @@ function withoutClosure() {
 
 結果: どちらも同様に遅い。**クロージャは無関係**。
 
-<details>
-<summary>ベンチマーク実行方法</summary>
-
 ```bash
 node benchmarks/bench_closure.js  # Node.js (V8)
 bun benchmarks/bench_closure.js   # Bun (JSC)
 ```
 
 → [bench_closure.js](benchmarks/bench_closure.js) / [実行結果](benchmarks/bench_closure-output.txt)
-
-</details>
 
 -----
 
@@ -306,17 +296,12 @@ bun benchmarks/bench_closure.js   # Bun (JSC)
 | computed + arrow | 17.31ms | 5.22ms |
 | computed + method | 17.33ms | 6.07ms |
 
-<details>
-<summary>ベンチマーク実行方法</summary>
-
 ```bash
 node benchmarks/bench_fn_types.js  # Node.js (V8)
 bun benchmarks/bench_fn_types.js   # Bun (JSC)
 ```
 
 → [bench_fn_types.js](benchmarks/bench_fn_types.js) / [実行結果](benchmarks/bench_fn_types-output.txt)
-
-</details>
 
 結果: どれも同様に遅い。**関数の書き方は無関係**。
 
@@ -361,17 +346,12 @@ for (let i = 0; i < n; i++) {
 
 結果: **関数の場合だけ遅い**（V8で約12倍、JSCで約5倍）。プリミティブ値なら問題ない。アクセスと呼び出しはほぼ同じ速度。
 
-<details>
-<summary>ベンチマーク実行方法</summary>
-
 ```bash
 node benchmarks/bench_primitive.js  # Node.js (V8)
 bun benchmarks/bench_primitive.js   # Bun (JSC)
 ```
 
 → [bench_primitive.js](benchmarks/bench_primitive.js) / [実行結果](benchmarks/bench_primitive-output.txt)
-
-</details>
 
 -----
 
@@ -458,9 +438,6 @@ function literalComputedNewFn() {
 結果、12行目の `const obj = {` や、15行目の `return obj;` でもなく、**13行目の `[SYM]() {}` がホットスポット**であることが確認できた。
 これは元のXポストで「`[Symbol.dispose]()` の行が 135.5ms」と報告されていた内容と完全に一致する。
 
-<details>
-<summary>プロファイル解析の手順</summary>
-
 ```bash
 # V8 プロファイル生成・解析
 node --cpu-prof --cpu-prof-name=benchmarks/bench_patterns-v8.cpuprofile benchmarks/bench_patterns.js
@@ -472,8 +449,6 @@ node benchmarks/analyze_profile.js benchmarks/bench_patterns-jsc.cpuprofile
 ```
 
 → [analyze_profile.js](benchmarks/analyze_profile.js) / [V8プロファイル](benchmarks/bench_patterns-v8.cpuprofile) / [V8解析結果](benchmarks/bench_patterns-v8-profile-analysis.txt) / [JSCプロファイル](benchmarks/bench_patterns-jsc.cpuprofile) / [JSC解析結果](benchmarks/bench_patterns-jsc-profile-analysis.txt)
-
-</details>
 
 -----
 
@@ -533,17 +508,12 @@ function addLater() {
 - **変数経由で渡せば速い**（ローカル変数でもモジュールスコープでも）
 - **後付けも速い**
 
-<details>
-<summary>ベンチマーク実行方法</summary>
-
 ```bash
 node benchmarks/bench_method_vs_property.js  # Node.js (V8)
 bun benchmarks/bench_method_vs_property.js   # Bun (JSC)
 ```
 
 → [bench_method_vs_property.js](benchmarks/bench_method_vs_property.js) / [実行結果](benchmarks/bench_method_vs_property-output.txt)
-
-</details>
 
 -----
 
@@ -577,22 +547,18 @@ const lock = createLock();
 lock[Symbol.dispose]();
 ```
 
-| パターン | Bun (literal) | Bun (class) |
-|---|---|---|
-| using | 8,020μs | 2,490μs |
-| try-finally | 5,060μs | 32μs |
-| simple loop | 4,630μs | 32μs |
-
-<details>
-<summary>ベンチマーク実行方法</summary>
+| パターン | Node (literal) | Node (class) | Bun (literal) | Bun (class) |
+|---|---|---|---|---|
+| using | 25.7ms | 10.3ms | 7.68ms | 2.58ms |
+| try-finally | 15.3ms | 52μs | 4.95ms | 33μs |
+| simple | 15.5ms | 52μs | 4.63ms | 33μs |
 
 ```bash
-bun benchmarks/bench_jsc_using.js  # Bun (JSC)
+node benchmarks/bench_jsc_using.js  # Node.js (V8)
+bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 ```
 
-→ [bench_jsc_using.js](benchmarks/bench_jsc_using.js) / [実行結果](benchmarks/bench_jsc_using-output.txt)
-
-</details>
+→ [bench_jsc_using.js](benchmarks/bench_jsc_using.js) / [実行結果](benchmarks/bench_using-output.txt)
 
 結果: **構文による差はほぼない**。遅さの原因は構文ではなくオブジェクト生成パターンだ。
 

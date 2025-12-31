@@ -1,0 +1,107 @@
+=== Node.js (V8) ===
+=== JSC (Bun) using syntax detailed verification ===
+
+[literal (computed + method)]
+  using:       25.92ms
+  try-finally: 15.40ms
+  simple:      15.31ms
+
+[class]
+  using:       10.39ms
+  try-finally: 52.3μs
+  simple:      51.1μs
+
+
+=== Multiple runs (5 times) ===
+
+class + using:
+  Run 1: 10.12ms
+  Run 2: 10.37ms
+  Run 3: 10.44ms
+  Run 4: 10.49ms
+  Run 5: 10.41ms
+
+class + try-finally:
+  Run 1: 52.9μs
+  Run 2: 48.0μs
+  Run 3: 47.7μs
+  Run 4: 47.5μs
+  Run 5: 46.0μs
+
+class + simple:
+  Run 1: 51.2μs
+  Run 2: 47.3μs
+  Run 3: 47.7μs
+  Run 4: 48.5μs
+  Run 5: 47.0μs
+
+literal + using:
+  Run 1: 25.34ms
+  Run 2: 25.85ms
+  Run 3: 25.57ms
+  Run 4: 25.84ms
+  Run 5: 25.48ms
+
+
+=== Exploring using implementation details ===
+
+Dispose count: 3
+Dispose order: c -> b -> a
+(Expected: c -> b -> a, LIFO order)
+
+null/undefined are not disposed (normal)
+Dispose count after null/undefined: 0
+
+=== Bun (JSC) ===
+=== JSC (Bun) using syntax detailed verification ===
+
+[literal (computed + method)]
+  using:       7.70ms
+  try-finally: 5.06ms
+  simple:      4.68ms
+
+[class]
+  using:       2.38ms
+  try-finally: 31.0μs
+  simple:      31.0μs
+
+
+=== Multiple runs (5 times) ===
+
+class + using:
+  Run 1: 2.39ms
+  Run 2: 2.38ms
+  Run 3: 2.19ms
+  Run 4: 2.23ms
+  Run 5: 2.68ms
+
+class + try-finally:
+  Run 1: 31.0μs
+  Run 2: 31.0μs
+  Run 3: 31.1μs
+  Run 4: 31.1μs
+  Run 5: 31.1μs
+
+class + simple:
+  Run 1: 31.0μs
+  Run 2: 31.0μs
+  Run 3: 31.0μs
+  Run 4: 31.1μs
+  Run 5: 31.0μs
+
+literal + using:
+  Run 1: 7.26ms
+  Run 2: 7.49ms
+  Run 3: 7.51ms
+  Run 4: 7.61ms
+  Run 5: 7.50ms
+
+
+=== Exploring using implementation details ===
+
+Dispose count: 3
+Dispose order: c -> b -> a
+(Expected: c -> b -> a, LIFO order)
+
+null/undefined are not disposed (normal)
+Dispose count after null/undefined: 0

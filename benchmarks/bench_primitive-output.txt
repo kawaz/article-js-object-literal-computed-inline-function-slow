@@ -5,19 +5,27 @@ Runtime: Node (V8)
 
 --- 100K (100,000 iterations) ---
 
-  new number (access):        2.00ms
-  new function (access):     16.51ms
-  new function (call):       16.37ms
+  number (void):          1.92ms
+  number (assign):        1.26ms
+  number (accum):        10.25ms
+  function (void):       17.14ms
+  function (assign):     17.01ms
+  function (accum):      17.18ms
+  function (call):       16.64ms
 
-  -> Function values are slow. Calling makes it even slower.
+  -> Function values are slow regardless of access method.
 
 --- 1M (1,000,000 iterations) ---
 
-  new number (access):        9.44ms
-  new function (access):    164.41ms
-  new function (call):      159.33ms
+  number (void):          8.48ms
+  number (assign):        7.70ms
+  number (accum):        12.81ms
+  function (void):      166.38ms
+  function (assign):    167.96ms
+  function (accum):     171.58ms
+  function (call):      158.42ms
 
-  -> Function values are slow. Calling makes it even slower.
+  -> Function values are slow regardless of access method.
 
 
 === Bun (JSC) ===
@@ -27,17 +35,25 @@ Runtime: Bun (JSC)
 
 --- 100K (100,000 iterations) ---
 
-  new number (access):        1.35ms
-  new function (access):      6.06ms
-  new function (call):        5.64ms
+  number (void):          1.34ms
+  number (assign):        0.98ms
+  number (accum):         1.63ms
+  function (void):        6.10ms
+  function (assign):      5.37ms
+  function (accum):       5.87ms
+  function (call):        5.40ms
 
-  -> Function values are slow. Calling makes it even slower.
+  -> Function values are slow regardless of access method.
 
 --- 1M (1,000,000 iterations) ---
 
-  new number (access):        6.67ms
-  new function (access):     52.91ms
-  new function (call):       48.52ms
+  number (void):          6.56ms
+  number (assign):        5.55ms
+  number (accum):        10.59ms
+  function (void):       52.23ms
+  function (assign):     54.35ms
+  function (accum):      56.23ms
+  function (call):       47.84ms
 
-  -> Function values are slow. Calling makes it even slower.
+  -> Function values are slow regardless of access method.
 

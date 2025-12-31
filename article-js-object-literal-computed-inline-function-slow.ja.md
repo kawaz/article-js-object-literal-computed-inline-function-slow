@@ -8,9 +8,9 @@ published: false
 
 # 「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い件
 
-## 結論
+## 長いので結論を先に書いておきます
 
-「オブジェクトリテラル」「computed property」「リテラル内での直接関数定義」の3条件が揃うと極端に遅くなる。
+「オブジェクトリテラル」「computed property」「リテラル内での直接関数定義」の3条件が揃うと極端に遅くなるので避けるべき。
 
 ```ts
 // 遅い（3条件が揃っている）
@@ -396,12 +396,12 @@ node --trace-opt --trace-deopt benchmarks/bench_patterns.js
 [bailout (kind: deopt-eager, reason: Insufficient type feedback for call): ...]
 ```
 
-毎回新しい関数オブジェクトが生成されるため、JIT が最適化しても実際には別の関数が来て Deopt が発生する。これが繰り返されることで大幅に遅くなる。
+毎回新しい関数オブジェクトが生成されるため、JIT が最適化しても実際には別の関数が来て Deopt が発生する。これが繰り返されることで大幅に遅くなるようだ。
 
 - `wrong call target`（呼び出し先が想定と違う）: 関数の呼び出し時
 - `Insufficient type feedback for call`（型フィードバック不足）: 関数値へのアクセス・呼び出し両方
 
-プリミティブ値ではこれらの Deopt は発生しない（`node --trace-opt --trace-deopt benchmarks/bench_primitive.js` で確認）。関数値の場合のみ、オブジェクト生成時点で型情報が安定せず最適化が阻害される。
+プリミティブ値ではこれらの Deopt は発生しない（`node --trace-opt --trace-deopt benchmarks/bench_primitive.js` で確認）。関数値の場合のみ、オブジェクト生成時点で型情報が安定せず最適化が阻害されることが分かった。
 
 #### CPU プロファイル (V8/JSC)
 
@@ -438,11 +438,13 @@ bun run --cpu-prof benchmarks/bench_patterns.js  # JSC
 
 ※合計時間: 約1.5秒、総サンプル数: 約1150
 
-両エンジンとも `literalComputedNewFn` が突出して高い。V8 は 52.2%、JSC は 39.8%。V8 の方が割合が高く、deopt ペナルティがより大きいことがわかる。また V8 では GC が 6.0% を占めており、毎回新しい関数オブジェクトを生成することによる GC 負荷も確認できた。
+両エンジンとも `literalComputedNewFn` が突出して高い。V8 は 52.2%、JSC は 39.8%。V8 の方が割合が高く、deopt ペナルティがより大きいようだ。
+また V8 では GC が 6.0% を占めており、毎回新しい関数オブジェクトを生成することによる GC 負荷も確認できた。
 
 #### 行レベルの確認 (JSC)
 
-JSC のプロファイラは行番号レベルで報告してくれる。`literalComputedNewFn` 内のどの行がホットスポットか確認するため、元の1行を改行して確認した:
+JSC のプロファイラを試してみたところ行番号レベルで報告してくれることが分かった。
+なので `literalComputedNewFn` 内のどの行がホットスポットか確認するため、元は1行で `return { [SYM]() {} }` のように書いていたが改行を付けて確認しなおすことにした。
 
 ```javascript
 function literalComputedNewFn() {
@@ -453,7 +455,8 @@ function literalComputedNewFn() {
 }
 ```
 
-結果、12行目の `const obj = {` でも15行目の `return obj;` でもなく、**13行目の `[SYM]() {}` がホットスポット**であることが確認できた。これは元のXポストで「`[Symbol.dispose]()` の行が 135.5ms」と報告されていた内容と完全に一致する。
+結果、12行目の `const obj = {` や、15行目の `return obj;` でもなく、**13行目の `[SYM]() {}` がホットスポット**であることが確認できた。
+これは元のXポストで「`[Symbol.dispose]()` の行が 135.5ms」と報告されていた内容と完全に一致する。
 
 <details>
 <summary>プロファイル解析の手順</summary>
@@ -474,7 +477,7 @@ node benchmarks/analyze_profile.js benchmarks/bench_patterns-jsc.cpuprofile
 
 -----
 
-### 検証6: 変数経由で渡せば速くなるか
+### 検証6: 関数の渡し方による違い
 
 検証1で「共有関数にすると速い」と分かったが、より詳細に切り分けを行った。
 

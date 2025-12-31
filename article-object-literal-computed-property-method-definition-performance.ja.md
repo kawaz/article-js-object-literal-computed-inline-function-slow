@@ -343,12 +343,12 @@ for (let i = 0; i < n; i++) {
 }
 ```
 
-| パターン | V8（アクセス） | V8（呼び出し） | Bun（アクセス） | Bun（呼び出し） |
+| パターン | V8（アクセス） | V8（呼び出し） | JSC（アクセス） | JSC（呼び出し） |
 |---|---|---|---|---|
 | 毎回新しい数値 | 1.36ms | - | 0.96ms | - |
 | 毎回新しい関数 | 16.21ms | 16.05ms | 5.20ms | 5.20ms |
 
-結果: **関数の場合だけ遅い**（V8で約12倍、Bunで約5倍）。プリミティブ値なら問題ない。アクセスと呼び出しはほぼ同じ速度。
+結果: **関数の場合だけ遅い**（V8で約12倍、JSCで約5倍）。プリミティブ値なら問題ない。アクセスと呼び出しはほぼ同じ速度。
 
 <details>
 <summary>ベンチマーク実行方法</summary>
@@ -453,11 +453,11 @@ node --cpu-prof --cpu-prof-name=benchmarks/bench_patterns-v8.cpuprofile benchmar
 node benchmarks/analyze_profile.js benchmarks/bench_patterns-v8.cpuprofile
 
 # JSC プロファイル生成・解析
-bun run --cpu-prof --cpu-prof-name=benchmarks/bench_patterns.cpuprofile benchmarks/bench_patterns.js
-node benchmarks/analyze_profile.js benchmarks/bench_patterns.cpuprofile
+bun run --cpu-prof --cpu-prof-name=benchmarks/bench_patterns-jsc.cpuprofile benchmarks/bench_patterns.js
+node benchmarks/analyze_profile.js benchmarks/bench_patterns-jsc.cpuprofile
 ```
 
-→ [analyze_profile.js](benchmarks/analyze_profile.js) / [V8プロファイル](benchmarks/bench_patterns-v8.cpuprofile) / [V8解析結果](benchmarks/bench_patterns-v8-profile-analysis.txt) / [JSCプロファイル](benchmarks/bench_patterns.cpuprofile) / [JSC解析結果](benchmarks/bench_patterns-profile-analysis.txt)
+→ [analyze_profile.js](benchmarks/analyze_profile.js) / [V8プロファイル](benchmarks/bench_patterns-v8.cpuprofile) / [V8解析結果](benchmarks/bench_patterns-v8-profile-analysis.txt) / [JSCプロファイル](benchmarks/bench_patterns-jsc.cpuprofile) / [JSC解析結果](benchmarks/bench_patterns-jsc-profile-analysis.txt)
 
 </details>
 
@@ -504,7 +504,7 @@ function addLater() {
 
 ### 結果（10万回）
 
-| パターン | V8 | Bun |
+| パターン | V8 | JSC |
 |---|---|---|
 | `{ [SYM]() {} }` メソッド定義 | 17.14ms | 6.64ms |
 | `{ [SYM]: function(){} }` インライン | 17.27ms | 6.08ms |

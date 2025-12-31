@@ -1,4 +1,4 @@
-Profile: benchmarks/bench_patterns.cpuprofile
+Profile: benchmarks/bench_patterns-jsc.cpuprofile
 Total samples: 1157
 Total time: 1.48 seconds
 

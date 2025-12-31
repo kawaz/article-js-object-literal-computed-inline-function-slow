@@ -1,12 +1,12 @@
 ---
-title: "「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い問題"
+title: "「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い件"
 emoji: "🐢"
 type: "tech"
 topics: ["javascript", "performance", "v8", "jsc"]
 published: false
 ---
 
-# 「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い問題
+# 「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い件
 
 ## 結論
 

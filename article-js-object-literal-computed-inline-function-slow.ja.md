@@ -243,28 +243,28 @@ bun benchmarks/bench_patterns.js   # Bun (JSC)
 
 ## 深掘り検証（検証2〜7）
 
-### 検証2: クロージャは関係あるか
+### 検証2: ローカルスコープ変数の参照は関係あるか
 
-クロージャが原因という仮説を検証。
+関数がローカルスコープの変数を参照することが原因という仮説を検証。
 
 ```javascript
-// クロージャあり
-function withClosure() {
+// ローカルスコープ変数を参照
+function withScopeRef() {
   let state = false;
   return {
     [Symbol.dispose]() { state = true; }
   };
 }
 
-// クロージャなし
-function withoutClosure() {
+// ローカルスコープ変数を参照しない
+function withoutScopeRef() {
   return {
     [Symbol.dispose]() {}
   };
 }
 ```
 
-結果: どちらも同様に遅い。**クロージャは無関係**。
+結果: どちらも同様に遅い。**ローカルスコープ変数の参照は無関係**。
 
 ```bash
 node benchmarks/bench_closure.js  # Node.js (V8)
@@ -568,7 +568,7 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 
 ### 条件の組み合わせ評価
 
-| 生成方法 | キー | キーの値 | 値の型 | 定義場所 | 関数種別 | クロージャ | 結果 | 検証 |
+| 生成方法 | キー | キーの値 | 値の型 | 定義場所 | 関数種別 | スコープ変数参照 | 結果 | 検証 |
 |---|---|---|---|---|---|---|---|---|
 | class | - | - | - | - | - | - | ✅ 速い | 検証1 |
 | 後付け | computed | Symbol | 関数 | 直接定義 | function | - | ✅ 速い | 検証1 |
@@ -606,7 +606,7 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 上記の組み合わせ評価から、🔥遅いパターンに共通するのは **「リテラル + computed + 関数 + 直接定義」** であり、以下の条件は結果に影響しない:
 - キーの値（Symbol / 通常）
 - 関数種別（function / arrow / method）
-- クロージャの有無
+- スコープ変数参照の有無
 
 つまり本質的には以下の **3条件** が揃うと遅くなる:
 - **オブジェクトリテラル内で**（in literal）

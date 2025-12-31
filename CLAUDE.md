@@ -9,8 +9,12 @@ JavaScriptエンジンのパフォーマンス問題を調査・検証した記�
 ## 作業時の指示
 
 - **記事の編集方針**: 日本語版を原本として推敲し、最終的に記事公開時に英語版を作成する
-- **Zenn公開時の変換**: Twitter/Xリンクは `@[tweet](URL)` 形式に変換して埋め込みカードにする
-  - 例: `[@vanilagy氏のポスト](https://x.com/...)` → `@[tweet](https://x.com/...)`
+- **Zenn公開フロー**:
+  - 記事mdにZenn用frontmatterを最初から埋め込む（`published: false`）
+  - 画像は元リポジトリに配置し `raw.githubusercontent.com` で参照
+  - Twitter/Xリンクは `@[tweet](URL)` 形式に変換
+  - 公開時: `kawaz/zenn/articles/` に記事mdをコピー、`published: true` に変更してpush
+  - 詳細は下記「Zenn公開」セクション参照
 - **記事の文体**: 日本語版は「だ・である」調で統一。ただし括弧内は筆者の内心・補足を表すため、断定調と異なることがある
 - **コード内コメント**: 英語で記述
 - **ユーザーが修正した場合・修正指示を出した場合**: そのまま受け入れず、一度内容が妥当かどうか評価した上で通すこと。良い点・気になる点があれば伝える
@@ -73,3 +77,43 @@ node --trace-opt --trace-deopt benchmarks/bench_patterns.js
 - 関数を共有する
 - オブジェクト生成後にプロパティを追加する
 - classを使う
+
+## Zenn公開
+
+記事ごとに専用リポジトリを作成し、Zennリポジトリには記事mdのみコピーする方針。
+
+### ディレクトリ構成
+
+```
+kawaz/article-{topic}/          ← 記事専用リポジトリ（公開）
+├── article-{topic}.ja.md       ← 原本（Zenn frontmatter含む）
+├── article-{topic}.md          ← 英語版（公開時に作成）
+├── images/                     ← 画像
+├── benchmarks/                 ← コード・データ
+└── CLAUDE.md
+
+kawaz/zenn/articles/            ← Zennリポジトリ
+└── {slug}.md                   ← 記事のみコピー
+```
+
+### Frontmatter形式
+
+```yaml
+---
+title: "記事タイトル"
+emoji: "🐢"
+type: "tech"
+topics: ["javascript", "performance", "v8", "jsc"]
+published: false
+---
+```
+
+### 公開手順
+
+1. 元リポジトリを公開（画像URL等が参照可能になる）
+2. 記事mdを `kawaz/zenn/articles/{slug}.md` にコピー
+3. 変換作業:
+   - Twitter/Xリンク → `@[tweet](URL)`
+   - 画像パス → `https://raw.githubusercontent.com/kawaz/{repo}/main/images/...`
+4. `published: true` に変更
+5. push → Zennに反映

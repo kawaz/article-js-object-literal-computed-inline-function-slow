@@ -648,13 +648,13 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 - **静的キー**なら、リテラル解析時に Shape を決定できるため最適化が効く
 - **ローカル変数経由**なら、関数定義がリテラル外なので最適化が効く
 - **モジュールスコープ共有**なら、呼び出し先が常に同じなので IC が安定する
-- **class** なら、プロトタイプ上の同一関数を共有するので IC が安定する
+- **class** なら、プロトタイプ上の同一関数を共有するので Shape も IC 安定する
 
 「リテラル + computed + リテラル内での直接関数定義」の場合:
 1. computed property のためリテラル解析時に Shape を決定できない
 2. 毎回新しい関数オブジェクトが生成される
 3. 呼び出しのたびに `wrong call target` で Deopt
-4. 最適化 → Deopt → 再最適化 の繰り返し
+4. 最適化 → Deopt → 再最適化 の繰り返しとかが起きている？分からんが
 
 :::details 内部メカニズムの推測（思考実験）
 
@@ -668,7 +668,7 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 ...
 ```
 - 毎回新しい Shape が作られキャッシュが効かない
-- 呼び出しのたびに wrong call target で Deopt
+- 呼び出しのたびに wrong call target で Deopt され IC も効かない
 - Shape が無限に増えて GC 負荷も増加
 - → **3重苦**
 
@@ -710,7 +710,7 @@ function createLock() {
   };
 }
 
-// ✅ 速い: 関数を共有
+// ✅ 速い: ローカルスコープで関数定義
 function createLock() {
   const release = () => { ... };
   return { release, [Symbol.dispose]: release };

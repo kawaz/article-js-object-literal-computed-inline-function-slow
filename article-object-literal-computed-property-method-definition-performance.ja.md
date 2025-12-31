@@ -391,13 +391,23 @@ node --trace-opt --trace-deopt benchmarks/bench_primitive.js
 
 ### Bun (JSC) の場合
 
-JSC には V8 のような詳細な deopt トレースオプションはないが、`--cpu-prof` でプロファイリングは可能。
+JSC には V8 のような詳細な deopt トレースオプションはないが、`--cpu-prof` でCPUプロファイリングが可能。
 
 ```bash
 bun run --cpu-prof benchmarks/bench_patterns.js
 ```
 
-ベンチマーク結果から、JSC でも同様に「リテラル + computed + 直接定義」パターンが遅いことが確認されており、同種の最適化阻害が発生していると推測される。
+生成された `.cpuprofile` ファイルの `hitCount`（CPUサンプル数）を確認：
+
+| 関数 | hitCount |
+|---|---|
+| `literalComputedNewFn` | **442** |
+| `literalStaticNewFn` | 44 |
+| `addLaterComputedNewFn` | 29 |
+| `literalComputedSharedFn` | 20 |
+| `literalStaticSharedFn` | 17 |
+
+「リテラル + computed + 直接定義」パターンが他の約10〜20倍のCPU時間を消費していることが確認できた。JSC でも同様の最適化阻害が発生している。
 
 -----
 

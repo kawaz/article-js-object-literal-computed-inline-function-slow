@@ -6,6 +6,8 @@ topics: ["javascript", "performance", "v8", "jsc"]
 published: false
 ---
 
+# object literal + computed + inline function が遅い問題
+
 ## 結論
 
 「オブジェクトリテラル」「computed property」「リテラル内での直接関数定義」の3条件が揃うと極端に遅くなる。
@@ -132,11 +134,13 @@ JIT コンパイラが最適化時に置いた仮定が崩れると、最適化�
 
 -----
 
-## 検証1: 何が遅さの原因か切り分ける
+## 検証
+
+### 検証1: 何が遅さの原因か切り分ける
 
 まず、どの条件が遅さに寄与しているか思いついた条件の組み合わせを総当たりで検証した。
 
-### 検証コード
+#### 検証コード
 
 ```javascript
 const SYM = Symbol("test");
@@ -196,7 +200,7 @@ class WithClass {
 }
 ```
 
-### 結果: 生成 + 呼び出し（10万回）
+#### 結果: 生成 + 呼び出し（10万回）
 
 | パターン | V8 (Node) | JSC (Bun) |
 |---|---|---|
@@ -210,7 +214,7 @@ class WithClass {
 | 後付け + 静的キー + 共有関数 | 1.55ms | 1.47ms |
 | class | 1.62ms | 1.80ms |
 
-### 結果: 生成 + 呼び出し（1000万回）
+#### 結果: 生成 + 呼び出し（1000万回）
 
 | パターン | V8 (Node) | JSC (Bun) |
 |---|---|---|
@@ -231,7 +235,7 @@ bun benchmarks/bench_patterns.js   # Bun (JSC)
 
 </details>
 
-### 発見
+#### 発見
 
 「リテラル + computed + 直接定義」の組み合わせだけが突出して遅い。
 
@@ -244,7 +248,7 @@ bun benchmarks/bench_patterns.js   # Bun (JSC)
 
 -----
 
-## 検証2: クロージャは関係あるか
+### 検証2: クロージャは関係あるか
 
 クロージャが原因という仮説を検証。
 
@@ -281,7 +285,7 @@ bun benchmarks/bench_closure.js   # Bun (JSC)
 
 -----
 
-## 検証3: function / arrow / method の違い
+### 検証3: function / arrow / method の違い
 
 関数の書き方による違いを検証。
 
@@ -318,7 +322,7 @@ bun benchmarks/bench_fn_types.js   # Bun (JSC)
 
 -----
 
-## 検証4: 値がプリミティブ値の場合はどうなるか
+### 検証4: 値がプリミティブ値の場合はどうなるか
 
 毎回新しい値でも、値が関数以外の場合はどうなるかも検証。
 
@@ -371,11 +375,11 @@ bun benchmarks/bench_primitive.js   # Bun (JSC)
 
 -----
 
-## 検証5: なぜ遅くなるか
+### 検証5: なぜ遅くなるか
 
 V8 と JSC の両方で、なぜ遅くなるかを確認した。
 
-### deopt トレース (V8)
+#### deopt トレース (V8)
 
 V8 のトレースオプションで Deoptimization の発生を確認した。
 
@@ -399,7 +403,7 @@ node --trace-opt --trace-deopt benchmarks/bench_patterns.js
 
 プリミティブ値ではこれらの Deopt は発生しない（`node --trace-opt --trace-deopt benchmarks/bench_primitive.js` で確認）。関数値の場合のみ、オブジェクト生成時点で型情報が安定せず最適化が阻害される。
 
-### CPU プロファイル (V8/JSC)
+#### CPU プロファイル (V8/JSC)
 
 両エンジンで CPU プロファイリングを行い、どの関数が CPU 時間を消費しているか確認した。
 
@@ -436,7 +440,7 @@ bun run --cpu-prof benchmarks/bench_patterns.js  # JSC
 
 両エンジンとも `literalComputedNewFn` が突出して高い。V8 は 52.2%、JSC は 39.8%。V8 の方が割合が高く、deopt ペナルティがより大きいことがわかる。また V8 では GC が 6.0% を占めており、毎回新しい関数オブジェクトを生成することによる GC 負荷も確認できた。
 
-### 行レベルの確認 (JSC)
+#### 行レベルの確認 (JSC)
 
 JSC のプロファイラは行番号レベルで報告してくれる。`literalComputedNewFn` 内のどの行がホットスポットか確認するため、元の1行を改行して確認した:
 
@@ -470,11 +474,11 @@ node benchmarks/analyze_profile.js benchmarks/bench_patterns-jsc.cpuprofile
 
 -----
 
-## 検証6: 変数経由で渡せば速くなるか
+### 検証6: 変数経由で渡せば速くなるか
 
 検証1で「共有関数にすると速い」と分かったが、より詳細に切り分けを行った。
 
-### 検証パターン
+#### 検証パターン
 
 ```javascript
 const SYM = Symbol("test");
@@ -509,7 +513,7 @@ function addLater() {
 }
 ```
 
-### 結果（10万回）
+#### 結果（10万回）
 
 | パターン | V8 | JSC |
 |---|---|---|
@@ -519,7 +523,7 @@ function addLater() {
 | `{ [SYM]: sharedFn }` モジュール共有 | 3.09ms | 1.68ms |
 | `obj[SYM] = function(){}` 後付け | 2.73ms | 2.08ms |
 
-### 発見
+#### 発見
 
 - **メソッド定義構文かどうかは関係ない**（1と2がほぼ同じ速度）
 - **「リテラル内で直接関数を定義する」ことが遅さの原因**
@@ -540,7 +544,7 @@ bun benchmarks/bench_method_vs_property.js   # Bun (JSC)
 
 -----
 
-## 検証7: using 構文や try-finally は関係あるか
+### 検証7: using 構文や try-finally は関係あるか
 
 （追加検証）元のコードは `using` 構文で使うことを想定していたようだ。構文自体が遅さの原因か検証した。
 
@@ -578,7 +582,7 @@ bun benchmarks/bench_jsc_using.js  # Bun (JSC)
 
 -----
 
-## 検証8: 135ms の謎
+### 検証8: 135ms の謎
 
 元ポストでは 135.5ms という数字だったが、こちらの検証では最大でも 30〜90ms 程度だった。
 

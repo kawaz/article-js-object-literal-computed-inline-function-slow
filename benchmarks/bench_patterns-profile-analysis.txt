@@ -1,0 +1,21 @@
+Profile: benchmarks/bench_patterns.cpuprofile
+Total samples: 1029
+Total time: 1.33 seconds
+
+Function | File | Line | hitCount | %
+---------|------|------|----------|---
+literalComputedNewFn           | bench_patterns.js    |   12 |      403 | 39.2%
+benchWithCall                  | bench_patterns.js    |   74 |      263 | 25.6%
+benchWithCall                  | bench_patterns.js    |   75 |      129 | 12.5%
+addLaterComputedSharedFn       | bench_patterns.js    |   35 |       32 | 3.1%
+literalStaticNewFn             | bench_patterns.js    |   19 |       29 | 2.8%
+addLaterComputedNewFn          | bench_patterns.js    |   29 |       26 | 2.5%
+addLaterStaticSharedFn         | bench_patterns.js    |   47 |       26 | 2.5%
+literalComputedSharedFn        | bench_patterns.js    |   16 |       21 | 2.0%
+literalStaticSharedFn          | bench_patterns.js    |   24 |       21 | 2.0%
+addLaterStaticNewFn            | bench_patterns.js    |   41 |       21 | 2.0%
+WithClass                      |                      |    1 |       20 | 1.9%
+toLocaleString                 |                      |   -1 |        8 | 0.8%
+dispose                        | bench_patterns.js    |   -1 |        8 | 0.8%
+sharedFn                       | bench_patterns.js    |   -1 |        6 | 0.6%
+benchWithCall                  | bench_patterns.js    |   73 |        5 | 0.5%

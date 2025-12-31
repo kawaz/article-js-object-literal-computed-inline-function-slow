@@ -403,21 +403,21 @@ bun run --cpu-prof benchmarks/bench_patterns.js
 
 | 関数 | hitCount | 割合 |
 |---|---|---|
-| `literalComputedNewFn` | **442** | **約30%** |
-| `addLaterComputedNewFn` | 40 | 約3% |
-| `literalStaticNewFn` | 36 | 約2% |
-| `literalComputedSharedFn` | 27 | 約2% |
-| `literalStaticSharedFn` | 25 | 約2% |
+| `literalComputedNewFn` | **403** | **39.2%** |
+| `addLaterComputedSharedFn` | 32 | 3.1% |
+| `literalStaticNewFn` | 29 | 2.8% |
+| `addLaterComputedNewFn` | 26 | 2.5% |
+| `literalComputedSharedFn` | 21 | 2.0% |
 
-※プロファイル合計時間: 約1.5秒（10万回 + 1000万回）、総サンプル数: 約1500
+※プロファイル合計時間: 約1.3秒（10万回 + 1000万回）、総サンプル数: 約1000
 
 また、プロファイルには行番号情報も含まれており、どの行が遅いかも確認できる。
 
 | 関数 | 行 | hitCount |
 |---|---|---|
-| `literalComputedNewFn` | 12 (`return { [SYM]() {} }`) | **393** |
-| `literalStaticNewFn` | 19 | 27 |
-| `literalComputedSharedFn` | 16 | 25 |
+| `literalComputedNewFn` | 12 (`return { [SYM]() {} }`) | **403** |
+| `literalStaticNewFn` | 19 | 29 |
+| `literalComputedSharedFn` | 16 | 21 |
 
 12行目の `return { [SYM]() {} };` が突出して遅いことが行レベルで確認できた。これは元のXポストで「`[Symbol.dispose]()` の行が 135.5ms」と報告されていた内容と一致する。
 
@@ -428,44 +428,24 @@ bun run --cpu-prof benchmarks/bench_patterns.js
 
 ```bash
 # プロファイル生成
-bun run --cpu-prof --cpu-prof-name=profile.cpuprofile benchmarks/bench_patterns.js
+bun run --cpu-prof --cpu-prof-name=benchmarks/bench_patterns.cpuprofile benchmarks/bench_patterns.js
+
+# 解析
+node benchmarks/analyze_profile.js benchmarks/bench_patterns.cpuprofile
 ```
 
-生成された `.cpuprofile` は JSON 形式。以下のスクリプトで解析できる。
-
-```javascript
-// analyze_profile.js
-const fs = require('fs');
-const data = JSON.parse(fs.readFileSync('profile.cpuprofile', 'utf8'));
-
-// 関数ごとの hitCount を集計
-const results = {};
-data.nodes.forEach(n => {
-  const name = n.callFrame.functionName;
-  if (name && n.hitCount > 0) {
-    if (!results[name]) results[name] = { hitCount: 0, line: n.callFrame.lineNumber };
-    results[name].hitCount += n.hitCount;
-  }
-});
-
-// hitCount 順にソートして表示
-Object.entries(results)
-  .sort((a, b) => b[1].hitCount - a[1].hitCount)
-  .slice(0, 10)
-  .forEach(([name, data]) => {
-    console.log(`${name}: ${data.hitCount} (line ${data.line})`);
-  });
-```
-
-```bash
-node analyze_profile.js
-```
+→ [analyze_profile.js](benchmarks/analyze_profile.js) / [プロファイル](benchmarks/bench_patterns.cpuprofile) / [解析結果](benchmarks/bench_patterns-profile-analysis.txt)
 
 出力例:
 ```
-literalComputedNewFn: 393 (line 12)
-benchWithCall: 166 (line 74)
-literalStaticNewFn: 27 (line 19)
+Profile: benchmarks/bench_patterns.cpuprofile
+Total samples: 1029
+Total time: 1.33 seconds
+
+Function                       | File                 | Line | hitCount | %
+literalComputedNewFn           | bench_patterns.js    |   12 |      403 | 39.2%
+benchWithCall                  | bench_patterns.js    |   74 |      263 | 25.6%
+literalStaticNewFn             | bench_patterns.js    |   19 |       29 | 2.8%
 ...
 ```
 

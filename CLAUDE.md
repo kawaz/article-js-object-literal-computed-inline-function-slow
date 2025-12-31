@@ -34,8 +34,8 @@ JavaScriptエンジンのパフォーマンス問題を調査・検証した記�
 ## リポジトリ構成
 
 ```
-article-...-performance.md     # 技術記事（英語版）
-article-...-performance.ja.md  # 技術記事（日本語版）
+article-js-object-literal-computed-inline-function-slow.md     # 技術記事（英語版）
+article-js-object-literal-computed-inline-function-slow.ja.md  # 技術記事（日本語版）
 benchmarks/                    # ベンチマークスクリプト
 eslint-plugin/                 # 問題パターン検出用ESLintプラグイン
 session/                       # 元のClaudeセッション記録

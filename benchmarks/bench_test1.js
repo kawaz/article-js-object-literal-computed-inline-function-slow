@@ -96,7 +96,7 @@ function runAll(n, label) {
   // Print results
   for (const r of results) {
     const marker = r.name === "literal + computed + new fn" ? "**" : "  ";
-    console.log(`${marker}${r.name.padEnd(35)} ${r.time.toFixed(0).padStart(6)}ms`);
+    console.log(`${marker}${r.name.padEnd(35)} ${r.time.toFixed(2).padStart(9)}ms`);
   }
 
   // Calculate ratio

@@ -397,15 +397,19 @@ JSC には V8 のような詳細な deopt トレースオプションはない�
 bun run --cpu-prof benchmarks/bench_patterns.js
 ```
 
-生成された `.cpuprofile` ファイルの `hitCount`（CPUサンプル数）を確認。プロファイル合計時間は約1.5秒（10万回 + 1000万回）。
+生成された `.cpuprofile` ファイルから `hitCount` を確認。
 
-| 関数 | hitCount |
-|---|---|
-| `literalComputedNewFn` | **442** |
-| `addLaterComputedNewFn` | 40 |
-| `literalStaticNewFn` | 36 |
-| `literalComputedSharedFn` | 27 |
-| `literalStaticSharedFn` | 25 |
+`hitCount` とは、プロファイラが一定間隔（約1ms）で「今どの関数を実行中か」をサンプリングした回数。hitCount が高いほど CPU 時間を多く消費していることを意味する。
+
+| 関数 | hitCount | 割合 |
+|---|---|---|
+| `literalComputedNewFn` | **442** | **約30%** |
+| `addLaterComputedNewFn` | 40 | 約3% |
+| `literalStaticNewFn` | 36 | 約2% |
+| `literalComputedSharedFn` | 27 | 約2% |
+| `literalStaticSharedFn` | 25 | 約2% |
+
+※プロファイル合計時間: 約1.5秒（10万回 + 1000万回）、総サンプル数: 約1500
 
 「リテラル + computed + 直接定義」パターンが他の約10〜17倍のCPU時間を消費していることが確認できた。V8のような詳細なdeopt情報は取れないが、JSC でも同様の最適化阻害が発生している。
 

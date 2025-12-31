@@ -366,13 +366,14 @@ bun benchmarks/bench_primitive.js   # Bun (JSC)
 
 ## 検証5: なぜ遅くなるか
 
-### Node.js (V8) の場合
+V8 と JSC の両方で、なぜ遅くなるかを確認した。
+
+### deopt トレース (V8)
 
 V8 のトレースオプションで Deoptimization の発生を確認した。
 
 ```bash
 node --trace-opt --trace-deopt benchmarks/bench_patterns.js
-node --trace-opt --trace-deopt benchmarks/bench_primitive.js
 ```
 
 出力（抜粋）:
@@ -389,31 +390,48 @@ node --trace-opt --trace-deopt benchmarks/bench_primitive.js
 - `wrong call target`（呼び出し先が想定と違う）: 関数の呼び出し時
 - `Insufficient type feedback for call`（型フィードバック不足）: 関数値へのアクセス・呼び出し両方
 
-プリミティブ値ではこれらの Deopt は発生しない。関数値の場合のみ、オブジェクト生成時点で型情報が安定せず最適化が阻害される。
+プリミティブ値ではこれらの Deopt は発生しない（`node --trace-opt --trace-deopt benchmarks/bench_primitive.js` で確認）。関数値の場合のみ、オブジェクト生成時点で型情報が安定せず最適化が阻害される。
 
-### Bun (JSC) の場合
+### CPU プロファイル (V8/JSC)
 
-JSC には V8 のような詳細な deopt トレースオプションはないが、`--cpu-prof` でCPUプロファイリングが可能。
+両エンジンで CPU プロファイリングを行い、どの関数が CPU 時間を消費しているか確認した。
 
 ```bash
-bun run --cpu-prof benchmarks/bench_patterns.js
+node --cpu-prof benchmarks/bench_patterns.js  # V8
+bun run --cpu-prof benchmarks/bench_patterns.js  # JSC
 ```
 
-生成された `.cpuprofile` ファイルから `hitCount` を確認。
+生成された `.cpuprofile` から `hitCount`（プロファイラが「今どの関数を実行中か」をサンプリングした回数）を確認。hitCount が高いほどその関数が CPU 時間を多く消費していることを意味する。
 
-`hitCount` とは、プロファイラが一定間隔（約1ms）で「今どの関数を実行中か」をサンプリングした回数。子関数を呼んでいる間は親の hitCount は増えないし、I/O 待ちなどの非 CPU 時間はカウントされないらしい。つまり hitCount が高いほどその関数が CPU 時間を多く消費していることを意味するという解釈でよさそうだ。
+**V8 (Node.js)**
+
+| 関数 | hitCount | 割合 |
+|---|---|---|
+| `literalComputedNewFn` | **1318** | **52.2%** |
+| (garbage collector) | 151 | 6.0% |
+| `addLaterStaticNewFn` | 49 | 1.9% |
+| `literalStaticNewFn` | 35 | 1.4% |
+| その他 | - | - |
+
+※合計時間: 約3.1秒、総サンプル数: 約2500
+
+**JSC (Bun)**
 
 | 関数 | 行 | hitCount | 割合 |
 |---|---|---|---|
-| `literalComputedNewFn` | 13 (`[SYM]() {}`) | **459** | **39.8%** |
+| `literalComputedNewFn` | 13 | **459** | **39.8%** |
 | `addLaterStaticNewFn` | 44 | 43 | 3.7% |
 | `literalStaticNewFn` | 22 | 34 | 2.9% |
 | `addLaterComputedNewFn` | 32 | 29 | 2.5% |
-| `literalComputedSharedFn` | 19 | 21 | 1.8% |
+| その他 | - | - | - |
 
-※プロファイル合計時間: 約1.5秒（10万回 + 1000万回）、総サンプル数: 約1150
+※合計時間: 約1.5秒、総サンプル数: 約1150
 
-ベンチマークコードは元々1行だった `return { [SYM]() {} };` を以下のように改行して確認した:
+両エンジンとも `literalComputedNewFn` が突出して高い。V8 は 52.2%、JSC は 39.8%。V8 の方が割合が高く、deopt ペナルティがより大きいことがわかる。また V8 では GC が 6.0% を占めており、毎回新しい関数オブジェクトを生成することによる GC 負荷も確認できた。
+
+### 行レベルの確認 (JSC)
+
+JSC のプロファイラは行番号レベルで報告してくれる。`literalComputedNewFn` 内のどの行がホットスポットか確認するため、元の1行を改行して確認した:
 
 ```javascript
 function literalComputedNewFn() {
@@ -424,33 +442,22 @@ function literalComputedNewFn() {
 }
 ```
 
-結果、12行目の `const obj = {` でも15行目の `return obj;` でもなく、**13行目の `[SYM]() {}` がホットスポット**であることが確認できた。これは元のXポストで「`[Symbol.dispose]()` の行が 135.5ms」と報告されていた内容と完全に一致する。V8のような詳細なdeopt情報は取れないが、JSC でも同様の最適化阻害が発生していることが確認できた。
+結果、12行目の `const obj = {` でも15行目の `return obj;` でもなく、**13行目の `[SYM]() {}` がホットスポット**であることが確認できた。これは元のXポストで「`[Symbol.dispose]()` の行が 135.5ms」と報告されていた内容と完全に一致する。
 
 <details>
 <summary>プロファイル解析の手順</summary>
 
 ```bash
-# プロファイル生成
-bun run --cpu-prof --cpu-prof-name=benchmarks/bench_patterns.cpuprofile benchmarks/bench_patterns.js
+# V8 プロファイル生成・解析
+node --cpu-prof --cpu-prof-name=benchmarks/bench_patterns-v8.cpuprofile benchmarks/bench_patterns.js
+node benchmarks/analyze_profile.js benchmarks/bench_patterns-v8.cpuprofile
 
-# 解析
+# JSC プロファイル生成・解析
+bun run --cpu-prof --cpu-prof-name=benchmarks/bench_patterns.cpuprofile benchmarks/bench_patterns.js
 node benchmarks/analyze_profile.js benchmarks/bench_patterns.cpuprofile
 ```
 
-→ [analyze_profile.js](benchmarks/analyze_profile.js) / [プロファイル](benchmarks/bench_patterns.cpuprofile) / [解析結果](benchmarks/bench_patterns-profile-analysis.txt)
-
-出力例:
-```
-Profile: benchmarks/bench_patterns.cpuprofile
-Total samples: 1154
-Total time: 1.47 seconds
-
-Function                       | File                 | Line | hitCount | %
-literalComputedNewFn           | bench_patterns.js    |   13 |      459 | 39.8%
-benchWithCall                  | bench_patterns.js    |   77 |      297 | 25.7%
-literalStaticNewFn             | bench_patterns.js    |   22 |       34 | 2.9%
-...
-```
+→ [analyze_profile.js](benchmarks/analyze_profile.js) / [V8プロファイル](benchmarks/bench_patterns-v8.cpuprofile) / [V8解析結果](benchmarks/bench_patterns-v8-profile-analysis.txt) / [JSCプロファイル](benchmarks/bench_patterns.cpuprofile) / [JSC解析結果](benchmarks/bench_patterns-profile-analysis.txt)
 
 </details>
 

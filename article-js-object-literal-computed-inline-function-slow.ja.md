@@ -418,28 +418,28 @@ bun run --cpu-prof benchmarks/bench_patterns.js  # JSC
 
 | 関数 | hitCount | 割合 |
 |---|---|---|
-| `literalComputedNewFn` | **1318** | **52.2%** |
-| (garbage collector) | 151 | 6.0% |
-| `addLaterStaticNewFn` | 49 | 1.9% |
-| `literalStaticNewFn` | 35 | 1.4% |
+| `literalComputedNewFn` | **1193** | **52.5%** |
+| (garbage collector) | 138 | 6.1% |
+| `addLaterStaticNewFn` | 31 | 1.4% |
+| `literalStaticNewFn` | 30 | 1.3% |
 | その他 | - | - |
 
-※合計時間: 約3.1秒、総サンプル数: 約2500
+※合計時間: 約2.9秒、総サンプル数: 約2300
 
 **JSC (Bun)**
 
 | 関数 | 行 | hitCount | 割合 |
 |---|---|---|---|
-| `literalComputedNewFn` | 13 | **459** | **39.8%** |
-| `addLaterStaticNewFn` | 44 | 43 | 3.7% |
-| `literalStaticNewFn` | 22 | 34 | 2.9% |
-| `addLaterComputedNewFn` | 32 | 29 | 2.5% |
+| `literalComputedNewFn` | 13 | **403** | **38.6%** |
+| `literalStaticNewFn` | 22 | 44 | 4.2% |
+| `addLaterComputedNewFn` | 32 | 30 | 2.9% |
+| `addLaterStaticNewFn` | 44 | 30 | 2.9% |
 | その他 | - | - | - |
 
-※合計時間: 約1.5秒、総サンプル数: 約1150
+※合計時間: 約1.4秒、総サンプル数: 約1050
 
-両エンジンとも `literalComputedNewFn` が突出して高い。V8 は 52.2%、JSC は 39.8%。V8 の方が割合が高く、deopt ペナルティがより大きいようだ。
-また V8 では GC が 6.0% を占めており、毎回新しい関数オブジェクトを生成することによる GC 負荷も確認できた。
+両エンジンとも `literalComputedNewFn` が突出して高い。V8 は 52.5%、JSC は 38.6%。V8 の方が割合が高く、deopt ペナルティがより大きいようだ。
+また V8 では GC が 6.1% を占めており、毎回新しい関数オブジェクトを生成することによる GC 負荷も確認できた。
 
 #### 行レベルの確認 (JSC)
 
@@ -449,7 +449,7 @@ JSC のプロファイラを試してみたところ行番号レベルで報告�
 ```javascript
 function literalComputedNewFn() {
   const obj = {      // 12行目
-    [SYM]() {}       // 13行目 ← ここだけでベンチコード全体の37%を占めるホットスポット!
+    [SYM]() {}       // 13行目 ← ここだけでベンチコード全体の39%を占めるホットスポット!
   };                 // 14行目
   return obj;        // 15行目
 }

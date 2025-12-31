@@ -186,27 +186,27 @@ class WithClass {
 
 | パターン | V8 (Node) | JSC (Bun) |
 |---|---|---|
-| **リテラル + computed + 毎回新関数** | **17ms** | **7ms** |
-| リテラル + computed + 共有関数 | 3ms | 1ms |
-| リテラル + 静的キー + 毎回新関数 | 2ms | 2ms |
-| リテラル + 静的キー + 共有関数 | 1ms | 1ms |
-| 後付け + computed + 毎回新関数 | 3ms | 1ms |
-| 後付け + computed + 共有関数 | 2ms | 1ms |
-| 後付け + 静的キー + 毎回新関数 | 3ms | 2ms |
-| 後付け + 静的キー + 共有関数 | 2ms | 1ms |
-| class | 1ms | 1ms |
+| **リテラル + computed + 毎回新関数** | **16.94ms** | **6.38ms** |
+| リテラル + computed + 共有関数 | 3.09ms | 1.21ms |
+| リテラル + 静的キー + 毎回新関数 | 1.98ms | 1.73ms |
+| リテラル + 静的キー + 共有関数 | 1.34ms | 1.17ms |
+| 後付け + computed + 毎回新関数 | 3.22ms | 1.40ms |
+| 後付け + computed + 共有関数 | 1.67ms | 1.41ms |
+| 後付け + 静的キー + 毎回新関数 | 2.89ms | 1.95ms |
+| 後付け + 静的キー + 共有関数 | 1.55ms | 1.47ms |
+| class | 1.62ms | 1.80ms |
 
 ### 結果: 生成 + 呼び出し（1000万回）
 
 | パターン | V8 (Node) | JSC (Bun) |
 |---|---|---|
-| **リテラル + computed + 毎回新関数** | **1576ms** | **487ms** |
-| リテラル + 静的キー + 共有関数 | 125ms | 36ms |
-| class | 139ms | 43ms |
-| **倍率（class比）** | **約11倍** | **約11倍** |
+| **リテラル + computed + 毎回新関数** | **1,677ms** | **550ms** |
+| リテラル + 静的キー + 共有関数 | 125ms | 79ms |
+| class | 144ms | 90ms |
+| **倍率（class比）** | **約12倍** | **約6倍** |
 
 <details>
-<summary>ベンチマーク実行方法</summary>
+<summary>ベンチマーク実行方法と結果</summary>
 
 ```bash
 # Node.js (V8)
@@ -220,6 +220,30 @@ node --trace-opt --trace-deopt benchmarks/bench_test1.js
 ```
 
 → [benchmarks/bench_test1.js](benchmarks/bench_test1.js)
+
+```
+=== Node.js (V8) - 100K ===
+literal + computed + new fn             16.94ms
+literal + computed + shared fn           3.09ms
+literal + static + new fn                1.98ms
+literal + static + shared fn             1.34ms
+add-later + computed + new fn            3.22ms
+add-later + computed + shared fn         1.67ms
+add-later + static + new fn              2.89ms
+add-later + static + shared fn           1.55ms
+class                                    1.62ms
+
+=== Bun (JSC) - 100K ===
+literal + computed + new fn              6.38ms
+literal + computed + shared fn           1.21ms
+literal + static + new fn                1.73ms
+literal + static + shared fn             1.17ms
+add-later + computed + new fn            1.40ms
+add-later + computed + shared fn         1.41ms
+add-later + static + new fn              1.95ms
+add-later + static + shared fn           1.47ms
+class                                    1.80ms
+```
 
 </details>
 
@@ -278,12 +302,12 @@ function withoutClosure() {
 
 | パターン | V8 | JSC |
 |---|---|---|
-| computed + function | 28.44ms | 21.44ms |
-| computed + arrow | 31.16ms | 19.15ms |
-| computed + method | 32.09ms | 12.69ms |
+| computed + function | 16.61ms | 6.37ms |
+| computed + arrow | 17.31ms | 5.22ms |
+| computed + method | 17.33ms | 6.07ms |
 
 <details>
-<summary>ベンチマーク実行方法</summary>
+<summary>ベンチマーク実行方法と結果</summary>
 
 ```bash
 node benchmarks/bench_fn_types.js
@@ -291,6 +315,20 @@ bun benchmarks/bench_fn_types.js
 ```
 
 → [benchmarks/bench_fn_types.js](benchmarks/bench_fn_types.js)
+
+```
+=== Node.js (V8) - Creation + call (100K) ===
+[computed key (Symbol)]
+  function: 16.61ms
+  arrow:    17.31ms
+  method:   17.33ms
+
+=== Bun (JSC) - Creation + call (100K) ===
+[computed key (Symbol)]
+  function: 6.37ms
+  arrow:    5.22ms
+  method:   6.07ms
+```
 
 </details>
 
@@ -396,18 +434,31 @@ lock[Symbol.dispose]();
 
 | パターン | Bun (literal) | Bun (class) |
 |---|---|---|
-| using | 25.31ms | 13.87ms |
-| try-finally | 24.96ms | 2.38ms |
-| simple loop | 23.28ms | 2.38ms |
+| using | 8.10ms | 2.48ms |
+| try-finally | 5.25ms | 0.03ms |
+| simple loop | 4.80ms | 0.03ms |
 
 <details>
-<summary>ベンチマーク実行方法</summary>
+<summary>ベンチマーク実行方法と結果</summary>
 
 ```bash
 bun benchmarks/bench_jsc_using.js
 ```
 
 → [benchmarks/bench_jsc_using.js](benchmarks/bench_jsc_using.js)
+
+```
+=== Bun (JSC) - 100K ===
+[literal (computed + method)]
+  using:       8.10ms
+  try-finally: 5.25ms
+  simple:      4.80ms
+
+[class]
+  using:       2.48ms
+  try-finally: 0.03ms
+  simple:      0.03ms
+```
 
 </details>
 

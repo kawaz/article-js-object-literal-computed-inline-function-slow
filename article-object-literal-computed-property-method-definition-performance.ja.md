@@ -403,27 +403,17 @@ bun run --cpu-prof benchmarks/bench_patterns.js
 
 `hitCount` とは、プロファイラが一定間隔（約1ms）で「今どの関数を実行中か」をサンプリングした回数。子関数を呼んでいる間は親の hitCount は増えないし、I/O 待ちなどの非 CPU 時間はカウントされないらしい。つまり hitCount が高いほどその関数が CPU 時間を多く消費していることを意味するという解釈でよさそうだ。
 
-| 関数 | hitCount | 割合 |
-|---|---|---|
-| `literalComputedNewFn` | **403** | **39.2%** |
-| `addLaterComputedSharedFn` | 32 | 3.1% |
-| `literalStaticNewFn` | 29 | 2.8% |
-| `addLaterComputedNewFn` | 26 | 2.5% |
-| `literalComputedSharedFn` | 21 | 2.0% |
+| 関数 | 行 | hitCount | 割合 |
+|---|---|---|---|
+| `literalComputedNewFn` | 12 (`return { [SYM]() {} }`) | **403** | **39.2%** |
+| `addLaterComputedSharedFn` | 35 | 32 | 3.1% |
+| `literalStaticNewFn` | 19 | 29 | 2.8% |
+| `addLaterComputedNewFn` | 29 | 26 | 2.5% |
+| `literalComputedSharedFn` | 16 | 21 | 2.0% |
 
 ※プロファイル合計時間: 約1.3秒（10万回 + 1000万回）、総サンプル数: 約1000
 
-また、プロファイルには行番号情報も含まれており、どの行が遅いかも確認できる。
-
-| 関数 | 行 | hitCount |
-|---|---|---|
-| `literalComputedNewFn` | 12 (`return { [SYM]() {} }`) | **403** |
-| `literalStaticNewFn` | 19 | 29 |
-| `literalComputedSharedFn` | 16 | 21 |
-
-12行目の `return { [SYM]() {} };` が突出して遅いことが行レベルで確認できた。これは元のXポストで「`[Symbol.dispose]()` の行が 135.5ms」と報告されていた内容と一致する。
-
-「リテラル + computed + 直接定義」パターンが他の約10〜17倍のCPU時間を消費していることが確認できた。V8のような詳細なdeopt情報は取れないが、JSC でも同様の最適化阻害が発生している。
+12行目の `return { [SYM]() {} };` が突出して遅い。これは元のXポストで「`[Symbol.dispose]()` の行が 135.5ms」と報告されていた内容と一致する。V8のような詳細なdeopt情報は取れないが、JSC でも同様の最適化阻害が発生していることが確認できた。
 
 <details>
 <summary>プロファイル解析の手順</summary>

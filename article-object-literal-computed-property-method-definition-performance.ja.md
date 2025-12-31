@@ -399,7 +399,7 @@ bun run --cpu-prof benchmarks/bench_patterns.js
 
 生成された `.cpuprofile` ファイルから `hitCount` を確認。
 
-`hitCount` とは、プロファイラが一定間隔（約1ms）で「今どの関数を実行中か」をサンプリングした回数。hitCount が高いほど CPU 時間を多く消費していることを意味するようだ。
+`hitCount` とは、プロファイラが一定間隔（約1ms）で「今どの関数を実行中か」をサンプリングした回数。子関数を呼んでいる間は親の hitCount は増えないし、I/O 待ちなどの非 CPU 時間はカウントされないらしい。つまり hitCount が高いほど CPU 時間を多く消費していることを意味するという解釈でよさそうだ。
 
 | 関数 | hitCount | 割合 |
 |---|---|---|

@@ -125,7 +125,7 @@ JIT コンパイラが最適化時に置いた仮定が崩れると、最適化�
 ### 検証コード
 
 ```javascript
-const SYM = Symbol("dispose");
+const SYM = Symbol("test");
 const sharedFn = function() {};
 
 // リテラル + computed + 毎回新関数

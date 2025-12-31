@@ -761,7 +761,7 @@ obj.c = 3;
 ただし computed property がある場合は話が変わる。
 
 ```javascript
-// ❌ 避ける: リテラル内に computed property + 関数
+// ❌ 避ける: リテラル内に computed property + 関数定義
 function create() {
   return {
     staticMethod() { ... },

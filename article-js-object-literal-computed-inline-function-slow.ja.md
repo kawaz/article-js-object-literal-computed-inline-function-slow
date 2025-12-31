@@ -632,7 +632,7 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 - 関数種別（function / arrow / method）（検証3）
 - スコープ変数参照の有無（検証2）
 
-つまり本質的には以下の **3条件** が揃うと遅くなる:
+本質的には以下の **3条件** が揃うと遅くなる:
 - **オブジェクトリテラル内で**（in literal）
 - **computed property に対して**（for computed key）
 - **関数を直接定義する**（inline function definition）
@@ -655,6 +655,48 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 2. 毎回新しい関数オブジェクトが生成される
 3. 呼び出しのたびに `wrong call target` で Deopt
 4. 最適化 → Deopt → 再最適化 の繰り返し
+
+:::details 内部メカニズムの推測（思考実験）
+
+以下はあくまで推測だが、観察結果との辻褄は合う。
+
+**3条件が揃う場合（遅い）**:
+```
+1st: {staticKeys, [Symbol.dispose]: dynfn1} → Shape S0 が作られる (no cache)
+2nd: {staticKeys, [Symbol.dispose]: dynfn2} → Shape S0' が作られる (no cache)
+3rd: {staticKeys, [Symbol.dispose]: dynfn3} → Shape S0'' が作られる (no cache)
+...
+```
+- 毎回新しい Shape が作られキャッシュが効かない
+- 呼び出しのたびに wrong call target で Deopt
+- Shape が無限に増えて GC 負荷も増加
+- → **3重苦**
+
+**後付け + computed + 直接定義（速い）**:
+```
+1st: {staticKeys} → Shape S0 (no cache), S0 + [Symbol.dispose] → Shape S1 (no cache)
+2nd: {staticKeys} → Shape S0 (cached), S0 + [Symbol.dispose] → Shape S1 (cached)
+```
+- リテラル部分の Shape S0 は2回目以降キャッシュから再利用
+- transition (S0 → S1) もキャッシュされる
+
+**リテラル + computed + 変数経由（速い）**:
+```
+1st: {staticKeys, [Symbol.dispose]: fn} → Shape S0 (no cache)
+2nd: {staticKeys, [Symbol.dispose]: fn} → Shape S0 (cached)
+```
+- 関数オブジェクトが同一参照なので Shape がキャッシュ可能
+
+**リテラル + static + 直接定義（速い）**:
+```
+1st: {staticKeys, staticFnKey: dynfn1} → Shape S0 (no cache)
+2nd: {staticKeys, staticFnKey: dynfn2} → Shape S0 (cached)
+```
+- キー構造が固定なので Shape がキャッシュ可能
+
+本当のところは V8 / JSC のソースを読まないとわからない。もし中の人が見ていたら教えてほしい。
+
+:::
 
 -----
 

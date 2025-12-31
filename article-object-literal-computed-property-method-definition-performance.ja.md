@@ -389,6 +389,16 @@ node --trace-opt --trace-deopt benchmarks/bench_primitive.js
 
 プリミティブ値ではこれらの Deopt は発生しない。関数値の場合のみ、オブジェクト生成時点で型情報が安定せず最適化が阻害される。
 
+### Bun (JSC) の場合
+
+JSC には V8 のような詳細な deopt トレースオプションはないが、`--cpu-prof` でプロファイリングは可能。
+
+```bash
+bun run --cpu-prof benchmarks/bench_patterns.js
+```
+
+ベンチマーク結果から、JSC でも同様に「リテラル + computed + 直接定義」パターンが遅いことが確認されており、同種の最適化阻害が発生していると推測される。
+
 -----
 
 ## 検証6: 変数経由で渡せば速くなるか

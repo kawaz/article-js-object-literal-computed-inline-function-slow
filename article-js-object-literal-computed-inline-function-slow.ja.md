@@ -547,9 +547,22 @@ bun benchmarks/bench_method_vs_property.js   # Bun (JSC)
 
 -----
 
-### 検証7: using 構文や try-finally は関係あるか
+### 検証7: using 構文は関係あるか？
 
-（追加検証）元のコードは `using` 構文で使うことを想定していたようだ。構文自体が遅さの原因か検証した。
+これまでの検証とは少し切り口が異なるが、元のコードが `[Symbol.dispose]` という組み込みシンボルに対するメソッド定義をしている点が気になった。これは比較的最近できた `using` 構文のためのシンボルだ。この構文の仕組みの中に遅い原因がある可能性もあるのではないか？これも確認しておこう。
+
+#### 前提知識: using 構文とは
+
+`using` 構文は ES2024 で追加されたリソース管理のための構文。スコープを抜ける際に自動で `[Symbol.dispose]()` が呼ばれる。
+
+```javascript
+{
+  using lock = createLock();
+  // スコープを抜けると自動で lock[Symbol.dispose]() が呼ばれる
+}
+```
+
+#### 検証
 
 ```javascript
 // using 構文

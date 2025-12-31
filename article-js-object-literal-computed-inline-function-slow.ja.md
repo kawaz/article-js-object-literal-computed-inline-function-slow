@@ -52,8 +52,9 @@ class Lock {
 
 [@vanilagy氏のポスト](https://x.com/vanilagy/status/2005003400023593125)で、ファクトリ関数内の `[Symbol.dispose]()` の行がプロファイラで 135.5ms と異常に遅いという報告があった。その後 class に書き換えたら劇的に改善したとのこと。
 
+元ポストのコードから要点を抜き出すとこうなる:
+
 ```javascript
-// 遅かったコード
 function createLock() {
   let released = false;
   return {

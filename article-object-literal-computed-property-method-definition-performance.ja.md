@@ -206,44 +206,14 @@ class WithClass {
 | **倍率（class比）** | **約12倍** | **約6倍** |
 
 <details>
-<summary>ベンチマーク実行方法と結果</summary>
+<summary>ベンチマーク実行方法</summary>
 
 ```bash
-# Node.js (V8)
-node benchmarks/bench_test1.js
-
-# Bun (JSC)
-bun benchmarks/bench_test1.js
-
-# V8 deopt トレース付き
-node --trace-opt --trace-deopt benchmarks/bench_test1.js
+node benchmarks/bench_test1.js  # Node.js (V8)
+bun benchmarks/bench_test1.js   # Bun (JSC)
 ```
 
-→ [benchmarks/bench_test1.js](benchmarks/bench_test1.js)
-
-```
-=== Node.js (V8) - 100K ===
-literal + computed + new fn             16.94ms
-literal + computed + shared fn           3.09ms
-literal + static + new fn                1.98ms
-literal + static + shared fn             1.34ms
-add-later + computed + new fn            3.22ms
-add-later + computed + shared fn         1.67ms
-add-later + static + new fn              2.89ms
-add-later + static + shared fn           1.55ms
-class                                    1.62ms
-
-=== Bun (JSC) - 100K ===
-literal + computed + new fn              6.38ms
-literal + computed + shared fn           1.21ms
-literal + static + new fn                1.73ms
-literal + static + shared fn             1.17ms
-add-later + computed + new fn            1.40ms
-add-later + computed + shared fn         1.41ms
-add-later + static + new fn              1.95ms
-add-later + static + shared fn           1.47ms
-class                                    1.80ms
-```
+→ [bench_test1.js](benchmarks/bench_test1.js) / [実行結果](benchmarks/bench_test1-output.txt)
 
 </details>
 
@@ -307,28 +277,14 @@ function withoutClosure() {
 | computed + method | 17.33ms | 6.07ms |
 
 <details>
-<summary>ベンチマーク実行方法と結果</summary>
+<summary>ベンチマーク実行方法</summary>
 
 ```bash
-node benchmarks/bench_fn_types.js
-bun benchmarks/bench_fn_types.js
+node benchmarks/bench_fn_types.js  # Node.js (V8)
+bun benchmarks/bench_fn_types.js   # Bun (JSC)
 ```
 
-→ [benchmarks/bench_fn_types.js](benchmarks/bench_fn_types.js)
-
-```
-=== Node.js (V8) - Creation + call (100K) ===
-[computed key (Symbol)]
-  function: 16.61ms
-  arrow:    17.31ms
-  method:   17.33ms
-
-=== Bun (JSC) - Creation + call (100K) ===
-[computed key (Symbol)]
-  function: 6.37ms
-  arrow:    5.22ms
-  method:   6.07ms
-```
+→ [bench_fn_types.js](benchmarks/bench_fn_types.js) / [実行結果](benchmarks/bench_fn_types-output.txt)
 
 </details>
 
@@ -439,26 +395,13 @@ lock[Symbol.dispose]();
 | simple loop | 4,630μs | 32μs |
 
 <details>
-<summary>ベンチマーク実行方法と結果</summary>
+<summary>ベンチマーク実行方法</summary>
 
 ```bash
-bun benchmarks/bench_jsc_using.js
+bun benchmarks/bench_jsc_using.js  # Bun (JSC)
 ```
 
-→ [benchmarks/bench_jsc_using.js](benchmarks/bench_jsc_using.js)
-
-```
-=== Bun (JSC) - 100K ===
-[literal (computed + method)]
-  using:       8.02ms
-  try-finally: 5.06ms
-  simple:      4.63ms
-
-[class]
-  using:       2.49ms
-  try-finally: 31.5μs
-  simple:      32.2μs
-```
+→ [bench_jsc_using.js](benchmarks/bench_jsc_using.js) / [実行結果](benchmarks/bench_jsc_using-output.txt)
 
 </details>
 

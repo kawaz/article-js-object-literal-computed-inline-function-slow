@@ -1,0 +1,53 @@
+=== Bun (JSC) ===
+=== JSC (Bun) using syntax detailed verification ===
+
+[literal (computed + method)]
+  using:       7.69ms
+  try-finally: 5.17ms
+  simple:      4.53ms
+
+[class]
+  using:       2.45ms
+  try-finally: 31.0μs
+  simple:      31.1μs
+
+
+=== Multiple runs (5 times) ===
+
+class + using:
+  Run 1: 2.37ms
+  Run 2: 2.18ms
+  Run 3: 2.26ms
+  Run 4: 2.37ms
+  Run 5: 2.78ms
+
+class + try-finally:
+  Run 1: 31.0μs
+  Run 2: 31.0μs
+  Run 3: 31.1μs
+  Run 4: 31.0μs
+  Run 5: 31.1μs
+
+class + simple:
+  Run 1: 31.0μs
+  Run 2: 31.0μs
+  Run 3: 31.0μs
+  Run 4: 31.1μs
+  Run 5: 31.0μs
+
+literal + using:
+  Run 1: 7.65ms
+  Run 2: 7.80ms
+  Run 3: 7.44ms
+  Run 4: 8.12ms
+  Run 5: 7.60ms
+
+
+=== Exploring using implementation details ===
+
+Dispose count: 3
+Dispose order: c -> b -> a
+(Expected: c -> b -> a, LIFO order)
+
+null/undefined are not disposed (normal)
+Dispose count after null/undefined: 0

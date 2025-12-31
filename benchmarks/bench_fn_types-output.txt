@@ -1,0 +1,129 @@
+=== Node.js (V8) ===
+=== function vs arrow vs method detailed comparison ===
+
+Runtime: Node (V8)
+
+=== Creation cost only ===
+
+[computed key (Symbol)]
+  function: 17.24ms
+  arrow:    16.44ms
+  method:   16.17ms
+
+[static key]
+  function: 1.37ms
+  arrow:    1.08ms
+  method:   1.11ms
+
+
+=== Creation + call cost ===
+
+[computed key (Symbol)]
+  function: 16.25ms
+  arrow:    17.87ms
+  method:   17.30ms
+
+[static key]
+  function: 2.15ms
+  arrow:    1.71ms
+  method:   1.99ms
+
+
+=== Function characteristics ===
+
+Has prototype:
+  function: true
+  arrow:    false
+  method:   false
+
+Can be used as constructor:
+  function: true
+  arrow:    false
+  method:   false
+
+
+=== Prototype creation cost ===
+
+  function (has prototype): 0.97ms
+  arrow (no prototype):     0.83ms
+  difference: 0.14ms
+
+
+=== this binding ===
+
+  arrow (this capture): 17.04ms
+  method (closure):     16.78ms
+  function (closure):   17.02ms
+
+
+=== Multiple runs (3-run average) ===
+
+[computed key creation cost]
+  function: 16.47ms
+  arrow:    16.54ms
+  method:   16.44ms
+
+=== Bun (JSC) ===
+=== function vs arrow vs method detailed comparison ===
+
+Runtime: Bun (JSC)
+
+=== Creation cost only ===
+
+[computed key (Symbol)]
+  function: 6.63ms
+  arrow:    5.70ms
+  method:   5.36ms
+
+[static key]
+  function: 0.85ms
+  arrow:    0.92ms
+  method:   1.06ms
+
+
+=== Creation + call cost ===
+
+[computed key (Symbol)]
+  function: 6.31ms
+  arrow:    5.48ms
+  method:   5.73ms
+
+[static key]
+  function: 1.16ms
+  arrow:    1.69ms
+  method:   1.34ms
+
+
+=== Function characteristics ===
+
+Has prototype:
+  function: true
+  arrow:    false
+  method:   false
+
+Can be used as constructor:
+  function: true
+  arrow:    false
+  method:   false
+
+
+=== Prototype creation cost ===
+
+  function (has prototype): 0.54ms
+  arrow (no prototype):     0.52ms
+  difference: 0.02ms
+
+
+=== this binding ===
+
+  arrow (this capture): 5.79ms
+  method (closure):     6.35ms
+  function (closure):   5.30ms
+
+
+=== Multiple runs (3-run average) ===
+
+[computed key creation cost]
+  function: 5.60ms
+  arrow:    5.35ms
+  method:   5.46ms

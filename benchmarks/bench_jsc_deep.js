@@ -2,7 +2,7 @@
 
 console.log("=== JSC-specific behavior deep dive ===\n");
 
-const SYM = Symbol("dispose");
+const SYM = Symbol("test");
 
 // ========================================
 // Test 3: function / arrow / method differences

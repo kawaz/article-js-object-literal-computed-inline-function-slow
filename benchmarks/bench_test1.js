@@ -4,7 +4,7 @@
 console.log("=== Test 1: Object creation pattern combinations ===\n");
 console.log(`Runtime: ${typeof Bun !== 'undefined' ? 'Bun (JSC)' : 'Node (V8)'}\n`);
 
-const SYM = Symbol("dispose");
+const SYM = Symbol("test");
 const sharedFn = function() {};
 
 // Pattern functions

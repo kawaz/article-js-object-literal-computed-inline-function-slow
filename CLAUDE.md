@@ -124,5 +124,6 @@ published: false
    - 相対パス（コード/テキスト） → `https://github.com/kawaz/{repo}/blob/main/...`
    - 相対パス（画像） → `https://raw.githubusercontent.com/kawaz/{repo}/main/...`
    - `<details><summary>タイトル</summary>` → `:::details タイトル` / `</details>` → `:::`
+   - h1削除（frontmatterのtitleがh1として機能、h2から始めると目次がh2-h3で階層表示される）
 4. `published: true` に変更
 5. push → Zennに反映

@@ -553,7 +553,7 @@ bun benchmarks/bench_method_vs_property.js   # Bun (JSC)
 
 #### 前提知識: using 構文とは
 
-`using` 構文は ES2024 で追加されたリソース管理のための構文。スコープを抜ける際に自動で `[Symbol.dispose]()` が呼ばれる。
+`using` 構文は ES2024 で追加されたリソース管理のための構文。スコープを抜ける際に自動で `[Symbol.dispose]()` が呼ばれる仕組みだ。
 
 ```javascript
 {

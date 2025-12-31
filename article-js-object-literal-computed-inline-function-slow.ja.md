@@ -375,7 +375,7 @@ bun benchmarks/bench_primitive.js   # Bun (JSC)
 
 -----
 
-### 検証5: なぜ遅くなるか
+### 検証5: プロファイラで深掘りしてみた
 
 V8 と JSC の両方で、なぜ遅くなるかを確認した。
 

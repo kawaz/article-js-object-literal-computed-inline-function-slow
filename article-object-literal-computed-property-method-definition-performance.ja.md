@@ -366,6 +366,8 @@ bun benchmarks/bench_primitive.js   # Bun (JSC)
 
 ## 検証5: なぜ遅くなるか
 
+### Node.js (V8) の場合
+
 V8 のトレースオプションで Deoptimization の発生を確認した。
 
 ```bash

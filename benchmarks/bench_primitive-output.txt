@@ -1,0 +1,43 @@
+=== Node.js (V8) ===
+=== Test 4: Primitive vs Function values ===
+
+Runtime: Node (V8)
+
+--- 100K (100,000 iterations) ---
+
+  new number (access):        2.00ms
+  new function (access):     16.51ms
+  new function (call):       16.37ms
+
+  -> Function values are slow. Calling makes it even slower.
+
+--- 1M (1,000,000 iterations) ---
+
+  new number (access):        9.44ms
+  new function (access):    164.41ms
+  new function (call):      159.33ms
+
+  -> Function values are slow. Calling makes it even slower.
+
+
+=== Bun (JSC) ===
+=== Test 4: Primitive vs Function values ===
+
+Runtime: Bun (JSC)
+
+--- 100K (100,000 iterations) ---
+
+  new number (access):        1.35ms
+  new function (access):      6.06ms
+  new function (call):        5.64ms
+
+  -> Function values are slow. Calling makes it even slower.
+
+--- 1M (1,000,000 iterations) ---
+
+  new number (access):        6.67ms
+  new function (access):     52.91ms
+  new function (call):       48.52ms
+
+  -> Function values are slow. Calling makes it even slower.
+

@@ -47,6 +47,10 @@ bun benchmarks/bench_closure.js
 node benchmarks/bench_fn_types.js
 bun benchmarks/bench_fn_types.js
 
+# 検証4: プリミティブ値 vs 関数
+node benchmarks/bench_primitive.js
+bun benchmarks/bench_primitive.js
+
 # V8 deoptトレース付き
 node --trace-opt --trace-deopt benchmarks/bench_test1.js
 ```

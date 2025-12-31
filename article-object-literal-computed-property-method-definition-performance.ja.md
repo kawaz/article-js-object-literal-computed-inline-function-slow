@@ -324,10 +324,22 @@ function createWithNewFunction() {
 
 | パターン | V8（生成+アクセス） | V8（生成+呼び出し） |
 |---|---|---|
-| 毎回新しい数値 | 2.15ms | - |
-| 毎回新しい関数 | 29.88ms | **89.59ms** |
+| 毎回新しい数値 | 2.17ms | - |
+| 毎回新しい関数 | 16.68ms | 15.94ms |
 
-結果: **関数の場合だけ遅い**。さらに、参照するだけなら 30ms 程度だが、呼び出すと 90ms に跳ね上がる。
+結果: **関数の場合だけ遅い**（約8倍）。プリミティブ値なら問題ない。
+
+<details>
+<summary>ベンチマーク実行方法</summary>
+
+```bash
+node benchmarks/bench_primitive.js  # Node.js (V8)
+bun benchmarks/bench_primitive.js   # Bun (JSC)
+```
+
+→ [bench_primitive.js](benchmarks/bench_primitive.js) / [実行結果](benchmarks/bench_primitive-output.txt)
+
+</details>
 
 -----
 

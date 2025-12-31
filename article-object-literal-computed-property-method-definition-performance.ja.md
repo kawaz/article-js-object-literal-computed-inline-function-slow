@@ -423,6 +423,54 @@ bun run --cpu-prof benchmarks/bench_patterns.js
 
 「リテラル + computed + 直接定義」パターンが他の約10〜17倍のCPU時間を消費していることが確認できた。V8のような詳細なdeopt情報は取れないが、JSC でも同様の最適化阻害が発生している。
 
+<details>
+<summary>プロファイル解析の手順</summary>
+
+```bash
+# プロファイル生成
+bun run --cpu-prof --cpu-prof-name=profile.cpuprofile benchmarks/bench_patterns.js
+```
+
+生成された `.cpuprofile` は JSON 形式。以下のスクリプトで解析できる。
+
+```javascript
+// analyze_profile.js
+const fs = require('fs');
+const data = JSON.parse(fs.readFileSync('profile.cpuprofile', 'utf8'));
+
+// 関数ごとの hitCount を集計
+const results = {};
+data.nodes.forEach(n => {
+  const name = n.callFrame.functionName;
+  if (name && n.hitCount > 0) {
+    if (!results[name]) results[name] = { hitCount: 0, line: n.callFrame.lineNumber };
+    results[name].hitCount += n.hitCount;
+  }
+});
+
+// hitCount 順にソートして表示
+Object.entries(results)
+  .sort((a, b) => b[1].hitCount - a[1].hitCount)
+  .slice(0, 10)
+  .forEach(([name, data]) => {
+    console.log(`${name}: ${data.hitCount} (line ${data.line})`);
+  });
+```
+
+```bash
+node analyze_profile.js
+```
+
+出力例:
+```
+literalComputedNewFn: 393 (line 12)
+benchWithCall: 166 (line 74)
+literalStaticNewFn: 27 (line 19)
+...
+```
+
+</details>
+
 -----
 
 ## 検証6: 変数経由で渡せば速くなるか

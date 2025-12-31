@@ -122,5 +122,6 @@ published: false
 3. 変換作業:
    - Twitter/Xリンク → `@[tweet](URL)`
    - 画像パス → `https://raw.githubusercontent.com/kawaz/{repo}/main/images/...`
+   - `<details><summary>タイトル</summary>` → `:::details タイトル` / `</details>` → `:::`
 4. `published: true` に変更
 5. push → Zennに反映

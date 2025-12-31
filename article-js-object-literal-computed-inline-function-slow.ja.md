@@ -241,7 +241,7 @@ bun benchmarks/bench_patterns.js   # Bun (JSC)
 
 -----
 
-## 深掘り検証（検証2〜7）
+## 深掘り検証（検証2〜8）
 
 ### 検証2: ローカルスコープ変数の参照は関係あるか
 
@@ -355,7 +355,44 @@ bun benchmarks/bench_primitive.js   # Bun (JSC)
 
 -----
 
-### 検証5: プロファイラで深掘りしてみた
+### 検証5: Symbol vs 通常の文字列キー
+
+仮説6「Symbol の computed property が遅い」を検証。Symbol と通常の文字列キーで差があるか？
+
+```javascript
+const SYM = Symbol("test");
+const STR = "dynamicKey";
+
+// Symbol キー
+function symbolKeyInline() {
+  return { [SYM]() {} };
+}
+
+// 文字列キー
+function stringKeyInline() {
+  return { [STR]() {} };
+}
+```
+
+| パターン | V8 | JSC |
+|---|---|---|
+| Symbol + inline | 16.37ms | 6.40ms |
+| String + inline | 13.72ms | 5.45ms |
+| Symbol + shared | 3.26ms | 1.16ms |
+| String + shared | 3.23ms | 1.68ms |
+
+```bash
+node benchmarks/bench_symbol_vs_string.js  # Node.js (V8)
+bun benchmarks/bench_symbol_vs_string.js   # Bun (JSC)
+```
+
+→ [bench_symbol_vs_string.js](benchmarks/bench_symbol_vs_string.js) / [実行結果](benchmarks/bench_symbol_vs_string-output.txt)
+
+結果: Symbol と String どちらも同様に遅い（inline の場合）。**キーの種類は無関係**。
+
+-----
+
+### 検証6: プロファイラで深掘りしてみた
 
 V8 と JSC の両方で、なぜ遅くなるかを確認した。
 
@@ -452,7 +489,7 @@ node benchmarks/analyze_profile.js benchmarks/bench_patterns-jsc.cpuprofile
 
 -----
 
-### 検証6: 関数の定義の仕方や渡し方による違いの確認
+### 検証7: 関数の定義の仕方や渡し方による違いの確認
 
 検証1で「共有関数（sharedFn）にすると速い」と分かった。では関数オブジェクトが同一である必要があるのか？ローカルスコープ内で毎回 `const fn = () => {}` としても速かった。つまり同一オブジェクトでなくても良いらしい。この辺りをより詳細に切り分けてみた。
 
@@ -517,7 +554,7 @@ bun benchmarks/bench_method_vs_property.js   # Bun (JSC)
 
 -----
 
-### 検証7（追加検証）: using 構文は関係あるか？
+### 検証8（追加検証）: using 構文は関係あるか？
 
 これまでの検証とは少し切り口が異なるが、元のコードが `[Symbol.dispose]` という組み込みシンボルに対するメソッド定義をしている点が気になった。これは比較的最近できた `using` 構文のためのシンボルだ。この構文の仕組みの中に遅い原因がある可能性もあるのではないか？これも確認しておこう。
 
@@ -580,18 +617,18 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 | リテラル | static | - | 関数 | 変数経由 | ✅ 速い | 検証1 |
 | リテラル | static | - | 関数 | 直接定義 | ✅ 速い | 検証1 |
 | リテラル | computed | Symbol | プリミティブ | - | ✅ 速い | 検証4 |
-| リテラル | computed | Symbol | 関数 | 変数経由 | ✅ 速い | 検証6 |
+| リテラル | computed | Symbol | 関数 | 変数経由 | ✅ 速い | 検証7 |
 | リテラル | computed | 通常 | プリミティブ | - | ✅ 速い | 検証4 |
-| リテラル | computed | 通常 | 関数 | 変数経由 | ✅ 速い | 検証6 |
-| **リテラル** | **computed** | **Symbol** | **関数** | **直接定義** | 🔥 **遅い** | 検証1,5 |
-| **リテラル** | **computed** | **通常** | **関数** | **直接定義** | 🔥 **遅い** | 検証1,5 |
+| リテラル | computed | 通常 | 関数 | 変数経由 | ✅ 速い | 検証7 |
+| **リテラル** | **computed** | **Symbol** | **関数** | **直接定義** | 🔥 **遅い** | 検証1,6 |
+| **リテラル** | **computed** | **通常** | **関数** | **直接定義** | 🔥 **遅い** | 検証1,6 |
 
 ### 結論
 
 上記の組み合わせ評価から、🔥遅いパターンに共通するのは **「リテラル + computed + 直接関数定義」** である。
 
 以下の条件は結果に影響しない:
-- キーの値（Symbol / 通常）（検証1）
+- キーの値（Symbol / 通常）（検証1,5）
 - 関数種別（function / arrow / method）（検証3）
 - スコープ変数参照の有無（検証2）
 

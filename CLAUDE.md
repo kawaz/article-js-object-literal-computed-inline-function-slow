@@ -64,7 +64,11 @@ bun benchmarks/bench_fn_types.js
 node benchmarks/bench_primitive.js
 bun benchmarks/bench_primitive.js
 
-# 検証6: メソッド定義 vs プロパティ代入（変数経由）
+# 検証5: Symbol vs 通常の文字列キー
+node benchmarks/bench_symbol_vs_string.js
+bun benchmarks/bench_symbol_vs_string.js
+
+# 検証7: メソッド定義 vs プロパティ代入（変数経由）
 node benchmarks/bench_method_vs_property.js
 bun benchmarks/bench_method_vs_property.js
 

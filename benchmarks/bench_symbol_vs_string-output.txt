@@ -1,0 +1,55 @@
+=== Node.js (V8) ===
+=== Test: Symbol vs String computed property key ===
+
+Runtime: Node (V8)
+
+--- 100K (100,000 iterations) ---
+
+  Symbol + inline:     16.37ms
+  String + inline:     13.72ms
+  Symbol + shared:      3.26ms
+  String + shared:      3.23ms
+
+  Ratio (symbol/string inline): 1.19x
+  Ratio (symbol/string shared): 1.01x
+  -> Both Symbol and String are similarly slow/fast. Key type is NOT the cause.
+
+--- 1M (1,000,000 iterations) ---
+
+  Symbol + inline:    161.58ms
+  String + inline:    135.34ms
+  Symbol + shared:     12.70ms
+  String + shared:     14.12ms
+
+  Ratio (symbol/string inline): 1.19x
+  Ratio (symbol/string shared): 0.90x
+  -> Both Symbol and String are similarly slow/fast. Key type is NOT the cause.
+
+
+=== Bun (JSC) ===
+=== Test: Symbol vs String computed property key ===
+
+Runtime: Bun (JSC)
+
+--- 100K (100,000 iterations) ---
+
+  Symbol + inline:      6.40ms
+  String + inline:      5.45ms
+  Symbol + shared:      1.16ms
+  String + shared:      1.68ms
+
+  Ratio (symbol/string inline): 1.17x
+  Ratio (symbol/string shared): 0.69x
+  -> Both Symbol and String are similarly slow/fast. Key type is NOT the cause.
+
+--- 1M (1,000,000 iterations) ---
+
+  Symbol + inline:     56.78ms
+  String + inline:     46.76ms
+  Symbol + shared:     10.29ms
+  String + shared:     10.54ms
+
+  Ratio (symbol/string inline): 1.21x
+  Ratio (symbol/string shared): 0.98x
+  -> Both Symbol and String are similarly slow/fast. Key type is NOT the cause.
+

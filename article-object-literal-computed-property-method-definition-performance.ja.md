@@ -411,6 +411,16 @@ bun run --cpu-prof benchmarks/bench_patterns.js
 
 ※プロファイル合計時間: 約1.5秒（10万回 + 1000万回）、総サンプル数: 約1500
 
+また、プロファイルには行番号情報も含まれており、どの行が遅いかも確認できる。
+
+| 関数 | 行 | hitCount |
+|---|---|---|
+| `literalComputedNewFn` | 12 (`return { [SYM]() {} }`) | **393** |
+| `literalStaticNewFn` | 19 | 27 |
+| `literalComputedSharedFn` | 16 | 25 |
+
+12行目の `return { [SYM]() {} };` が突出して遅いことが行レベルで確認できた。これは元のXポストで「`[Symbol.dispose]()` の行が 135.5ms」と報告されていた内容と一致する。
+
 「リテラル + computed + 直接定義」パターンが他の約10〜17倍のCPU時間を消費していることが確認できた。V8のような詳細なdeopt情報は取れないが、JSC でも同様の最適化阻害が発生している。
 
 -----

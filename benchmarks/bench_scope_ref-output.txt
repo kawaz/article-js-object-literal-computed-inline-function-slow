@@ -1,0 +1,43 @@
+=== Node.js (V8) ===
+=== Test 2: Local scope variable reference relevance ===
+
+Runtime: Node (V8)
+
+--- 100K (100,000 iterations) ---
+
+  with scope ref:        16.08ms
+  without scope ref:     16.01ms
+
+  Ratio: 1.00x
+  -> Both are similarly slow. Scope variable reference is NOT the cause.
+
+--- 1M (1,000,000 iterations) ---
+
+  with scope ref:       161.18ms
+  without scope ref:    157.30ms
+
+  Ratio: 1.02x
+  -> Both are similarly slow. Scope variable reference is NOT the cause.
+
+
+=== Bun (JSC) ===
+=== Test 2: Local scope variable reference relevance ===
+
+Runtime: Bun (JSC)
+
+--- 100K (100,000 iterations) ---
+
+  with scope ref:         6.55ms
+  without scope ref:      6.01ms
+
+  Ratio: 1.09x
+  -> Both are similarly slow. Scope variable reference is NOT the cause.
+
+--- 1M (1,000,000 iterations) ---
+
+  with scope ref:        58.44ms
+  without scope ref:     53.98ms
+
+  Ratio: 1.08x
+  -> Both are similarly slow. Scope variable reference is NOT the cause.
+

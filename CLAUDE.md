@@ -52,9 +52,9 @@ drafts/                        # 旧バージョン・下書き
 node benchmarks/bench_patterns.js
 bun benchmarks/bench_patterns.js
 
-# 検証2: クロージャは関係あるか
-node benchmarks/bench_closure.js
-bun benchmarks/bench_closure.js
+# 検証2: ローカルスコープ変数の参照は関係あるか
+node benchmarks/bench_scope_ref.js
+bun benchmarks/bench_scope_ref.js
 
 # 検証3: function/arrow/method 比較
 node benchmarks/bench_fn_types.js

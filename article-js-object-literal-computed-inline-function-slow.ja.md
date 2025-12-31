@@ -267,11 +267,11 @@ function withoutScopeRef() {
 結果: どちらも同様に遅い。**ローカルスコープ変数の参照は無関係**。
 
 ```bash
-node benchmarks/bench_closure.js  # Node.js (V8)
-bun benchmarks/bench_closure.js   # Bun (JSC)
+node benchmarks/bench_scope_ref.js  # Node.js (V8)
+bun benchmarks/bench_scope_ref.js   # Bun (JSC)
 ```
 
-→ [bench_closure.js](benchmarks/bench_closure.js) / [実行結果](benchmarks/bench_closure-output.txt)
+→ [bench_scope_ref.js](benchmarks/bench_scope_ref.js) / [実行結果](benchmarks/bench_scope_ref-output.txt)
 
 -----
 

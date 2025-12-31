@@ -121,7 +121,8 @@ published: false
 2. 記事mdを `kawaz/zenn/articles/{slug}.md` にコピー
 3. 変換作業:
    - Twitter/Xリンク → `@[tweet](URL)`
-   - 画像パス → `https://raw.githubusercontent.com/kawaz/{repo}/main/images/...`
+   - 相対パス（コード/テキスト） → `https://github.com/kawaz/{repo}/blob/main/...`
+   - 相対パス（画像） → `https://raw.githubusercontent.com/kawaz/{repo}/main/...`
    - `<details><summary>タイトル</summary>` → `:::details タイトル` / `</details>` → `:::`
 4. `published: true` に変更
 5. push → Zennに反映

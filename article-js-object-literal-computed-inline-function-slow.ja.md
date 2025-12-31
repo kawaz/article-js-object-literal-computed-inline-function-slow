@@ -764,25 +764,25 @@ obj.c = 3;
 // ❌ 避ける: リテラル内に computed property + 関数定義
 function create() {
   return {
-    staticMethod() { ... },
+    staticMethod() { ... },     // 静的キーはリテラルでOK
     [Symbol.dispose]() { ... }  // これが問題
   };
 }
 
 // ✅ 推奨: 静的プロパティはリテラルで、動的プロパティは後付け
 function create() {
-  const obj = { staticMethod() { ... } };  // 静的部分はリテラル
-  obj[Symbol.dispose] = function() { ... };  // 動的部分は後付け
+  const obj = { staticMethod() { ... } };    // 静的キーはリテラルでOK
+  obj[Symbol.dispose] = function() { ... };  // 動的キーは後付け
   return obj;
 }
 
-
 // ✅ 推奨: 静的プロパティはリテラルで、動的プロパティの関数は事前定義
 function create() {
-  const obj = { staticMethod() { ... } };  // 静的部分はリテラル
-  const dispose = function() { ... };  // 動的プロパティ用の関数は事前定義
-  obj[Symbol.dispose] = dispose;
-  return obj;
+  const dispose = function() { ... };  // 動的キー用の関数は事前定義
+  return {
+    staticMethod() { ... },   // 静的キーはリテラルでOK
+    [Symbol.dispose]: dispose // 動的キーに事前定義した関数を渡すのはOK
+  }
 }
 ```
 
@@ -794,7 +794,7 @@ function create() {
 |---|---|
 | 静的プロパティのみ | リテラル一発生成 |
 | computed property あり（値が関数以外） | リテラル一発でも問題なし |
-| computed property あり（値が関数） | 静的部分はリテラル、動的部分は後付け or class |
+| computed property あり（値が関数） | 後付け or 変数経由 or class |
 
 -----
 

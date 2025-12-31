@@ -6,8 +6,6 @@ topics: ["javascript", "performance", "v8", "jsc"]
 published: false
 ---
 
-# object literal + computed + inline function が遅い問題
-
 ## 結論
 
 「オブジェクトリテラル」「computed property」「リテラル内での直接関数定義」の3条件が揃うと極端に遅くなる。

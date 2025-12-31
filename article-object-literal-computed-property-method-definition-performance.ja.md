@@ -377,10 +377,10 @@ node --trace-opt --trace-deopt benchmarks/bench_primitive.js
 
 毎回新しい関数オブジェクトが生成されるため、JIT が最適化しても実際には別の関数が来て Deopt が発生する。これが繰り返されることで大幅に遅くなる。
 
-- **呼び出し時**: `wrong call target`（呼び出し先が想定と違う）
-- **アクセス・呼び出し共通**: `Insufficient type feedback for call`（型フィードバック不足）
+- `wrong call target`（呼び出し先が想定と違う）: 関数の呼び出し時
+- `Insufficient type feedback for call`（型フィードバック不足）: 関数値へのアクセス・呼び出し両方
 
-アクセスのみでも遅いのは、オブジェクト生成時点で型情報が安定せず最適化が阻害されるため。
+プリミティブ値ではこれらの Deopt は発生しない。関数値の場合のみ、オブジェクト生成時点で型情報が安定せず最適化が阻害される。
 
 -----
 

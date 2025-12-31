@@ -362,18 +362,25 @@ bun benchmarks/bench_primitive.js   # Bun (JSC)
 V8 のトレースオプションで Deoptimization の発生を確認した。
 
 ```bash
-node --trace-opt --trace-deopt bench.js
+node --trace-opt --trace-deopt benchmarks/bench_test1.js
+node --trace-opt --trace-deopt benchmarks/bench_primitive.js
 ```
 
 出力（抜粋）:
 ```
+# 呼び出し時
 [bailout (kind: deopt-eager, reason: wrong call target): ...]
-[bailout (kind: deopt-eager, reason: wrong call target): ...]
+
+# アクセス・呼び出し共通
+[bailout (kind: deopt-eager, reason: Insufficient type feedback for call): ...]
 ```
 
-`wrong call target`（呼び出し先が想定と違う）という理由で Deopt が繰り返し発生していた。
+毎回新しい関数オブジェクトが生成されるため、JIT が最適化しても実際には別の関数が来て Deopt が発生する。これが繰り返されることで大幅に遅くなる。
 
-毎回新しい関数オブジェクトが生成されるため、JIT が最適化しても実際には別の関数が来て Deopt が発生する。これが繰り返されることで大幅に遅くなる。アクセスのみでも遅いのは、オブジェクト生成時点で最適化が阻害されるためと考えられる。
+- **呼び出し時**: `wrong call target`（呼び出し先が想定と違う）
+- **アクセス・呼び出し共通**: `Insufficient type feedback for call`（型フィードバック不足）
+
+アクセスのみでも遅いのは、オブジェクト生成時点で型情報が安定せず最適化が阻害されるため。
 
 -----
 

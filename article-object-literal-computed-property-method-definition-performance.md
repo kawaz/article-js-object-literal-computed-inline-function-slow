@@ -183,16 +183,16 @@ class WithClass {
 
 ```bash
 # Node.js (V8)
-node benchmarks/bench_test1.js
+node benchmarks/bench_patterns.js
 
 # Bun (JSC)
-bun benchmarks/bench_test1.js
+bun benchmarks/bench_patterns.js
 
 # V8 with deopt trace
-node --trace-opt --trace-deopt benchmarks/bench_test1.js
+node --trace-opt --trace-deopt benchmarks/bench_patterns.js
 ```
 
-→ [benchmarks/bench_test1.js](benchmarks/bench_test1.js)
+→ [benchmarks/bench_patterns.js](benchmarks/bench_patterns.js)
 
 </details>
 

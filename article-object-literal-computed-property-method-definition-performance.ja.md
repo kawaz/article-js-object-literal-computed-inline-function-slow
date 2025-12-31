@@ -209,11 +209,11 @@ class WithClass {
 <summary>ベンチマーク実行方法</summary>
 
 ```bash
-node benchmarks/bench_test1.js  # Node.js (V8)
-bun benchmarks/bench_test1.js   # Bun (JSC)
+node benchmarks/bench_patterns.js  # Node.js (V8)
+bun benchmarks/bench_patterns.js   # Bun (JSC)
 ```
 
-→ [bench_test1.js](benchmarks/bench_test1.js) / [実行結果](benchmarks/bench_test1-output.txt)
+→ [bench_patterns.js](benchmarks/bench_patterns.js) / [実行結果](benchmarks/bench_patterns-output.txt)
 
 </details>
 
@@ -362,7 +362,7 @@ bun benchmarks/bench_primitive.js   # Bun (JSC)
 V8 のトレースオプションで Deoptimization の発生を確認した。
 
 ```bash
-node --trace-opt --trace-deopt benchmarks/bench_test1.js
+node --trace-opt --trace-deopt benchmarks/bench_patterns.js
 node --trace-opt --trace-deopt benchmarks/bench_primitive.js
 ```
 

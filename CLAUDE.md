@@ -36,8 +36,8 @@ drafts/                        # 旧バージョン・下書き
 
 ```bash
 # 検証1: オブジェクト生成パターンの総当たり
-node benchmarks/bench_test1.js
-bun benchmarks/bench_test1.js
+node benchmarks/bench_patterns.js
+bun benchmarks/bench_patterns.js
 
 # 検証2: クロージャは関係あるか
 node benchmarks/bench_closure.js
@@ -52,7 +52,7 @@ node benchmarks/bench_primitive.js
 bun benchmarks/bench_primitive.js
 
 # V8 deoptトレース付き
-node --trace-opt --trace-deopt benchmarks/bench_test1.js
+node --trace-opt --trace-deopt benchmarks/bench_patterns.js
 ```
 
 ## 技術的発見

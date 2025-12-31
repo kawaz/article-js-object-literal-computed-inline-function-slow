@@ -38,6 +38,10 @@ drafts/                        # 旧バージョン・下書き
 node benchmarks/bench_test1.js
 bun benchmarks/bench_test1.js
 
+# 検証2: クロージャは関係あるか
+node benchmarks/bench_closure.js
+bun benchmarks/bench_closure.js
+
 # 検証3: function/arrow/method 比較
 node benchmarks/bench_fn_types.js
 bun benchmarks/bench_fn_types.js

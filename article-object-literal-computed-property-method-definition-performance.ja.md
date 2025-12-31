@@ -253,6 +253,18 @@ function withoutClosure() {
 
 結果: どちらも同様に遅い。**クロージャは無関係**。
 
+<details>
+<summary>ベンチマーク実行方法</summary>
+
+```bash
+node benchmarks/bench_closure.js  # Node.js (V8)
+bun benchmarks/bench_closure.js   # Bun (JSC)
+```
+
+→ [bench_closure.js](benchmarks/bench_closure.js) / [実行結果](benchmarks/bench_closure-output.txt)
+
+</details>
+
 -----
 
 ## 検証3: function / arrow / method の違い

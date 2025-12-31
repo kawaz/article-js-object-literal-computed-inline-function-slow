@@ -1,0 +1,43 @@
+=== Node.js (V8) ===
+=== Test 2: Closure relevance ===
+
+Runtime: Node (V8)
+
+--- 100K (100,000 iterations) ---
+
+  with closure:        16.81ms
+  without closure:     16.31ms
+
+  Ratio: 1.03x
+  -> Both are similarly slow. Closure is NOT the cause.
+
+--- 1M (1,000,000 iterations) ---
+
+  with closure:       167.94ms
+  without closure:    165.12ms
+
+  Ratio: 1.02x
+  -> Both are similarly slow. Closure is NOT the cause.
+
+
+=== Bun (JSC) ===
+=== Test 2: Closure relevance ===
+
+Runtime: Bun (JSC)
+
+--- 100K (100,000 iterations) ---
+
+  with closure:         7.05ms
+  without closure:      6.19ms
+
+  Ratio: 1.14x
+  -> Both are similarly slow. Closure is NOT the cause.
+
+--- 1M (1,000,000 iterations) ---
+
+  with closure:        59.09ms
+  without closure:     54.61ms
+
+  Ratio: 1.08x
+  -> Both are similarly slow. Closure is NOT the cause.
+

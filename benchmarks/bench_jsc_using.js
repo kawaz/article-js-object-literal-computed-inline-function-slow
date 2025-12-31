@@ -80,37 +80,47 @@ for (let i = 0; i < 3; i++) {
   benchSimpleClass();
 }
 
+// Format with appropriate unit (ms or μs)
+function fmt(ms) {
+  if (ms < 1) {
+    const us = ms * 1000;
+    return `${us.toFixed(1)}μs`;
+  }
+  return `${ms.toFixed(2)}ms`;
+}
+
 console.log("[literal (computed + method)]");
-console.log(`  using:       ${benchUsingLiteral().toFixed(2)}ms`);
-console.log(`  try-finally: ${benchTryFinallyLiteral().toFixed(2)}ms`);
-console.log(`  simple:      ${benchSimpleLiteral().toFixed(2)}ms`);
+console.log(`  using:       ${fmt(benchUsingLiteral())}`);
+console.log(`  try-finally: ${fmt(benchTryFinallyLiteral())}`);
+console.log(`  simple:      ${fmt(benchSimpleLiteral())}`);
 
 console.log("\n[class]");
-console.log(`  using:       ${benchUsingClass().toFixed(2)}ms`);
-console.log(`  try-finally: ${benchTryFinallyClass().toFixed(2)}ms`);
-console.log(`  simple:      ${benchSimpleClass().toFixed(2)}ms`);
+console.log(`  using:       ${fmt(benchUsingClass())}`);
+console.log(`  try-finally: ${fmt(benchTryFinallyClass())}`);
+console.log(`  simple:      ${fmt(benchSimpleClass())}`);
+
 
 // Multiple runs
 console.log("\n\n=== Multiple runs (5 times) ===\n");
 
 console.log("class + using:");
 for (let run = 0; run < 5; run++) {
-  console.log(`  Run ${run + 1}: ${benchUsingClass().toFixed(2)}ms`);
+  console.log(`  Run ${run + 1}: ${fmt(benchUsingClass())}`);
 }
 
 console.log("\nclass + try-finally:");
 for (let run = 0; run < 5; run++) {
-  console.log(`  Run ${run + 1}: ${benchTryFinallyClass().toFixed(2)}ms`);
+  console.log(`  Run ${run + 1}: ${fmt(benchTryFinallyClass())}`);
 }
 
 console.log("\nclass + simple:");
 for (let run = 0; run < 5; run++) {
-  console.log(`  Run ${run + 1}: ${benchSimpleClass().toFixed(2)}ms`);
+  console.log(`  Run ${run + 1}: ${fmt(benchSimpleClass())}`);
 }
 
 console.log("\nliteral + using:");
 for (let run = 0; run < 5; run++) {
-  console.log(`  Run ${run + 1}: ${benchUsingLiteral().toFixed(2)}ms`);
+  console.log(`  Run ${run + 1}: ${fmt(benchUsingLiteral())}`);
 }
 
 // ========================================

@@ -434,9 +434,9 @@ lock[Symbol.dispose]();
 
 | パターン | Bun (literal) | Bun (class) |
 |---|---|---|
-| using | 8.10ms | 2.48ms |
-| try-finally | 5.25ms | 0.03ms |
-| simple loop | 4.80ms | 0.03ms |
+| using | 8.02ms | 2.49ms |
+| try-finally | 5.06ms | 32μs |
+| simple loop | 4.63ms | 32μs |
 
 <details>
 <summary>ベンチマーク実行方法と結果</summary>
@@ -450,14 +450,14 @@ bun benchmarks/bench_jsc_using.js
 ```
 === Bun (JSC) - 100K ===
 [literal (computed + method)]
-  using:       8.10ms
-  try-finally: 5.25ms
-  simple:      4.80ms
+  using:       8.02ms
+  try-finally: 5.06ms
+  simple:      4.63ms
 
 [class]
-  using:       2.48ms
-  try-finally: 0.03ms
-  simple:      0.03ms
+  using:       2.49ms
+  try-finally: 31.5μs
+  simple:      32.2μs
 ```
 
 </details>

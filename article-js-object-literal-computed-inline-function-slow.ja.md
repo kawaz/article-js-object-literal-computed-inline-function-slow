@@ -1,12 +1,12 @@
 ---
-title: "object literal + computed + inline function が遅い問題"
+title: "「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い問題"
 emoji: "🐢"
 type: "tech"
 topics: ["javascript", "performance", "v8", "jsc"]
 published: false
 ---
 
-# object literal + computed + inline function が遅い問題
+# 「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い問題
 
 ## 結論
 

@@ -775,6 +775,15 @@ function create() {
   obj[Symbol.dispose] = function() { ... };  // 動的部分は後付け
   return obj;
 }
+
+
+// ✅ 推奨: 静的プロパティはリテラルで、動的プロパティの関数は事前定義
+function create() {
+  const obj = { staticMethod() { ... } };  // 静的部分はリテラル
+  const dispose = function() { ... };  // 動的プロパティ用の関数は事前定義
+  obj[Symbol.dispose] = dispose;
+  return obj;
+}
 ```
 
 特に computed property の値が関数オブジェクトである場合、現状の V8 / JSC の最適化では「リテラル + computed + リテラル内での直接関数定義」の組み合わせで大幅な性能劣化が発生する。この組み合わせは避けるべき。

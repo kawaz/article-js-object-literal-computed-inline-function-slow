@@ -434,9 +434,9 @@ lock[Symbol.dispose]();
 
 | パターン | Bun (literal) | Bun (class) |
 |---|---|---|
-| using | 8.02ms | 2.49ms |
-| try-finally | 5.06ms | 32μs |
-| simple loop | 4.63ms | 32μs |
+| using | 8,020μs | 2,490μs |
+| try-finally | 5,060μs | 32μs |
+| simple loop | 4,630μs | 32μs |
 
 <details>
 <summary>ベンチマーク実行方法と結果</summary>

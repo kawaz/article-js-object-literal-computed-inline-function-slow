@@ -1,0 +1,63 @@
+=== Node.js (V8) ===
+=== Method definition vs Property assignment ===
+
+Runtime: Node (V8)
+
+--- 100K (100,000 iterations) ---
+
+  1. { [SYM]() {} }                 16.70ms  (method definition)
+  2. { [SYM]: function() {} }       16.84ms  (property + inline fn)
+  3. const fn=...; { [SYM]: fn }     3.53ms  (property + local fn)
+  4. { [SYM]: sharedFn }             3.11ms  (property + shared fn)
+  5. obj[SYM] = function(){}         2.69ms  (add-later + inline fn)
+
+  Key comparison:
+    Method def vs Property inline: 1.0x
+    Property inline vs local:      4.8x
+    Property local vs shared:      1.1x
+
+--- 1M (1,000,000 iterations) ---
+
+  1. { [SYM]() {} }                167.47ms  (method definition)
+  2. { [SYM]: function() {} }      170.49ms  (property + inline fn)
+  3. const fn=...; { [SYM]: fn }    13.28ms  (property + local fn)
+  4. { [SYM]: sharedFn }            10.53ms  (property + shared fn)
+  5. obj[SYM] = function(){}        13.65ms  (add-later + inline fn)
+
+  Key comparison:
+    Method def vs Property inline: 1.0x
+    Property inline vs local:      12.8x
+    Property local vs shared:      1.3x
+
+
+=== Bun (JSC) ===
+=== Method definition vs Property assignment ===
+
+Runtime: Bun (JSC)
+
+--- 100K (100,000 iterations) ---
+
+  1. { [SYM]() {} }                  6.35ms  (method definition)
+  2. { [SYM]: function() {} }        6.12ms  (property + inline fn)
+  3. const fn=...; { [SYM]: fn }     1.31ms  (property + local fn)
+  4. { [SYM]: sharedFn }             1.61ms  (property + shared fn)
+  5. obj[SYM] = function(){}         2.14ms  (add-later + inline fn)
+
+  Key comparison:
+    Method def vs Property inline: 1.0x
+    Property inline vs local:      4.7x
+    Property local vs shared:      0.8x
+
+--- 1M (1,000,000 iterations) ---
+
+  1. { [SYM]() {} }                 59.82ms  (method definition)
+  2. { [SYM]: function() {} }       58.67ms  (property + inline fn)
+  3. const fn=...; { [SYM]: fn }    12.04ms  (property + local fn)
+  4. { [SYM]: sharedFn }            13.38ms  (property + shared fn)
+  5. obj[SYM] = function(){}         6.45ms  (add-later + inline fn)
+
+  Key comparison:
+    Method def vs Property inline: 1.0x
+    Property inline vs local:      4.9x
+    Property local vs shared:      0.9x
+

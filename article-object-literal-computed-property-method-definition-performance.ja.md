@@ -2,13 +2,20 @@
 
 ## 結論
 
-「オブジェクトリテラル」「computed property」「メソッド定義(関数生成)」の3条件が揃うと極端に遅くなる。
+「オブジェクトリテラル」「computed property」「リテラル内での直接関数定義」の3条件が揃うと極端に遅くなる。
 
 ```ts
 // 遅い（3条件が揃っている）
 function createLock() {
   return {
-    [Symbol.dispose]() { ... }  // リテラル + computed + 毎回新関数
+    [Symbol.dispose]() { ... }  // リテラル + computed + 直接定義
+  };
+}
+
+// これも遅い（メソッド定義構文でなくても直接定義なら遅い）
+function createLock() {
+  return {
+    [Symbol.dispose]: function() { ... }  // リテラル + computed + 直接定義
   };
 }
 ```
@@ -19,7 +26,7 @@ function createLock() {
 // 速い（いずれかの条件を外す）
 function createLock() {
   const release = () => { ... };
-  return { [Symbol.dispose]: release };  // 関数を事前定義
+  return { [Symbol.dispose]: release };  // 変数経由で渡す
 }
 
 function createLock() {
@@ -219,11 +226,11 @@ bun benchmarks/bench_patterns.js   # Bun (JSC)
 
 ### 発見
 
-「リテラル + computed + 毎回新関数」の組み合わせだけが突出して遅い。
+「リテラル + computed + 直接定義」の組み合わせだけが突出して遅い。
 
 条件を一つでも外すと速くなる：
 
-- 共有関数にする → 速い
+- 変数経由で関数を渡す → 速い
 - 後付けにする → 速い
 - 静的キーにする → 速い
 - class にする → 速い
@@ -384,35 +391,73 @@ node --trace-opt --trace-deopt benchmarks/bench_primitive.js
 
 -----
 
-## 検証6: 関数を共有すれば速くなるか
+## 検証6: 変数経由で渡せば速くなるか
 
-同じ関数オブジェクトを使い回せば Deopt を回避できるはず。
+検証1で「共有関数にすると速い」と分かったが、より詳細に切り分けを行った。
+
+### 検証パターン
 
 ```javascript
-// 遅い: 毎回新しい関数
-function createLock() {
-  let released = false;
-  return {
-    release() { if (released) return; released = true; },
-    [Symbol.dispose]() { this.release(); }
-  };
+const SYM = Symbol("test");
+const sharedFn = function() {};
+
+// 1. メソッド定義構文（遅い）
+function methodDefinition() {
+  return { [SYM]() {} };
 }
 
-// 速い: release と dispose で同じ関数を共有
-function createLock() {
-  let released = false;
-  const release = () => { if (released) return; released = true; };
-  return { release, [Symbol.dispose]: release };
+// 2. リテラル内でインライン定義（遅い）
+function propertyInline() {
+  return { [SYM]: function() {} };
+}
+
+// 3. ローカル変数経由（速い）
+function propertyLocal() {
+  const fn = () => {};
+  return { [SYM]: fn };
+}
+
+// 4. モジュールスコープ共有（速い）
+function propertyShared() {
+  return { [SYM]: sharedFn };
+}
+
+// 5. 後付け（速い）
+function addLater() {
+  const obj = {};
+  obj[SYM] = function() {};
+  return obj;
 }
 ```
 
-| パターン | V8 |
-|---|---|
-| 毎回新関数 | 36.23ms |
-| **関数を共有** | **4.14ms** |
-| class | 4.49ms |
+### 結果（10万回）
 
-結果: **約9倍高速化**。class と同等の速度になった。
+| パターン | V8 | Bun |
+|---|---|---|
+| `{ [SYM]() {} }` メソッド定義 | 17.14ms | 6.64ms |
+| `{ [SYM]: function(){} }` インライン | 17.27ms | 6.08ms |
+| `const fn=...; { [SYM]: fn }` ローカル変数 | 3.65ms | 1.34ms |
+| `{ [SYM]: sharedFn }` モジュール共有 | 3.09ms | 1.68ms |
+| `obj[SYM] = function(){}` 後付け | 2.73ms | 2.08ms |
+
+### 発見
+
+- **メソッド定義構文かどうかは関係ない**（1と2がほぼ同じ速度）
+- **「リテラル内で直接関数を定義する」ことが遅さの原因**
+- **変数経由で渡せば速い**（ローカル変数でもモジュールスコープでも）
+- **後付けも速い**
+
+<details>
+<summary>ベンチマーク実行方法</summary>
+
+```bash
+node benchmarks/bench_method_vs_property.js  # Node.js (V8)
+bun benchmarks/bench_method_vs_property.js   # Bun (JSC)
+```
+
+→ [bench_method_vs_property.js](benchmarks/bench_method_vs_property.js) / [実行結果](benchmarks/bench_method_vs_property-output.txt)
+
+</details>
 
 -----
 

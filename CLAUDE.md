@@ -51,6 +51,10 @@ bun benchmarks/bench_fn_types.js
 node benchmarks/bench_primitive.js
 bun benchmarks/bench_primitive.js
 
+# 検証6: メソッド定義 vs プロパティ代入（変数経由）
+node benchmarks/bench_method_vs_property.js
+bun benchmarks/bench_method_vs_property.js
+
 # V8 deoptトレース付き
 node --trace-opt --trace-deopt benchmarks/bench_patterns.js
 ```

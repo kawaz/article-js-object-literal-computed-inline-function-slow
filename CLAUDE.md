@@ -4,7 +4,7 @@
 
 JavaScriptエンジンのパフォーマンス問題を調査・検証した記録。
 
-主な発見: **「オブジェクトリテラル」+「computed property」+「メソッド定義」の組み合わせは約10倍遅い**（V8/JSCのdeoptimizationが原因）。
+主な発見: **「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」の組み合わせは約10倍遅い**（V8/JSCのdeoptimizationが原因）。
 
 ## 作業時の指示
 

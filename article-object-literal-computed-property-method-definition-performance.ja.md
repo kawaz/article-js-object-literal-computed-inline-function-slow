@@ -210,16 +210,16 @@ class WithClass {
 
 ```bash
 # Node.js (V8)
-node benchmarks/bench_fn_types.js
+node benchmarks/bench_test1.js
 
 # Bun (JSC)
-bun benchmarks/bench_fn_types.js
+bun benchmarks/bench_test1.js
 
 # V8 deopt トレース付き
-node --trace-opt --trace-deopt benchmarks/bench_fn_types.js
+node --trace-opt --trace-deopt benchmarks/bench_test1.js
 ```
 
-→ [benchmarks/bench_fn_types.js](benchmarks/bench_fn_types.js)
+→ [benchmarks/bench_test1.js](benchmarks/bench_test1.js)
 
 </details>
 

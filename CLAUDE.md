@@ -26,14 +26,16 @@ drafts/                        # 旧バージョン・下書き
 ## ベンチマーク実行
 
 ```bash
-# Node.js (V8)
-node benchmarks/bench_fn_types.js
+# 検証1: オブジェクト生成パターンの総当たり
+node benchmarks/bench_test1.js
+bun benchmarks/bench_test1.js
 
-# Bun (JSC)
+# 検証3: function/arrow/method 比較
+node benchmarks/bench_fn_types.js
 bun benchmarks/bench_fn_types.js
 
 # V8 deoptトレース付き
-node --trace-opt --trace-deopt benchmarks/bench_fn_types.js
+node --trace-opt --trace-deopt benchmarks/bench_test1.js
 ```
 
 ## 技術的発見

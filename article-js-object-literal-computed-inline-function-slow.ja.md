@@ -724,8 +724,8 @@ function createLock() {
 
 // ✅ 速い: 後付け
 function createLock() {
-  const obj = { release() { ... } };
-  obj[Symbol.dispose] = function() { this.release(); };
+  const obj = {};
+  obj[Symbol.dispose] = () => { ... };
   return obj;
 }
 

@@ -1,12 +1,12 @@
 ---
-title: "Object Literal + Computed Property + Inline Function Definition = Slow"
+title: "In JS, Object Literal + Computed Property + Inline Function Definition = Slow"
 emoji: "🐢"
 type: "tech"
 topics: ["javascript", "performance", "v8", "jsc"]
 published: false
 ---
 
-# Object Literal + Computed Property + Inline Function Definition = Slow
+# In JS, Object Literal + Computed Property + Inline Function Definition = Slow
 
 > 🌐 [日本語版](article-js-object-literal-computed-inline-function-slow.ja.md)
 

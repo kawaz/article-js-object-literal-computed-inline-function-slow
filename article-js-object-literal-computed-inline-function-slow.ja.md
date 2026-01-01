@@ -1,12 +1,12 @@
 ---
-title: "「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い件"
+title: "JSで「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い件"
 emoji: "🐢"
 type: "tech"
 topics: ["javascript", "performance", "v8", "jsc"]
 published: false
 ---
 
-# 「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い件
+# JSで「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い件
 
 > 🌐 [English version](article-js-object-literal-computed-inline-function-slow.md)
 

@@ -643,7 +643,7 @@ Essentially, these **3 conditions** together cause slowness:
 
 ## Why Only This Combination Is Slow 🤔
 
-When 3 conditions are met, V8 / JSC optimization paths are bypassed.
+When 3 conditions are met, V8 / JSC optimization paths are bypassed (I don't know the details, this is just my speculation).
 
 ✅ Why other patterns are fast:
 - **Add-later**: Creates static Shape first, then adds via known transition - optimization works

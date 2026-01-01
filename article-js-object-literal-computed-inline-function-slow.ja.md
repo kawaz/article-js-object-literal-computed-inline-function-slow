@@ -10,6 +10,11 @@ published: false
 
 > 🌐 [English version](article-js-object-literal-computed-inline-function-slow.md)
 
+> 📝 **用語**
+> - 「computed property」: `{ [expr]: value }` 形式（`obj[expr]` のブラケット記法とは別）
+> - 「直接関数定義」: `{ [key]: function() {} }` のようにリテラル内で関数を記述
+> - 「変数経由」: `const fn = ...; { [key]: fn }` のように事前定義して渡す
+
 ## 長いので結論を先に書いておきます
 
 「オブジェクトリテラル」「computed property」「リテラル内での直接関数定義」の3条件が揃うと極端に遅くなるので避けるべき。

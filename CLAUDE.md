@@ -92,7 +92,7 @@ kawaz/zenn/articles/            ← Zennリポジトリ
 
 ```yaml
 ---
-title: "記事タイトル"
+title: "記事タイトル"  # 最大70文字
 emoji: "🐢"
 type: "tech"
 topics: ["javascript", "performance", "v8", "jsc"]

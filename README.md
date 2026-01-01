@@ -4,6 +4,11 @@ JavaScriptエンジン（V8/JSC）のパフォーマンス問題を調査・検�
 
 ## 記事
 
+### Zenn
+- [日本語版](https://zenn.dev/kawaz/articles/js-object-literal-computed-inline-function-slow)
+- [English version](https://zenn.dev/kawaz/articles/js-object-literal-computed-inline-function-slow-en)
+
+### GitHub
 - [日本語版](article-js-object-literal-computed-inline-function-slow.ja.md)
 - [English version](article-js-object-literal-computed-inline-function-slow.md)
 

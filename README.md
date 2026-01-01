@@ -1,28 +1,28 @@
-# JSで「オブジェクトリテラル」+「computed property」+「リテラル内での直接関数定義」が遅い件
+# In JS, Object Literal + Computed Property + Inline Function Definition = Slow
 
-JavaScriptエンジン（V8/JSC）のパフォーマンス問題を調査・検証した記録。
+Investigation and benchmarks of a JavaScript engine (V8/JSC) performance issue.
 
-## 記事
+## Articles
 
 ### Zenn
-- [日本語版](https://zenn.dev/kawaz/articles/js-object-literal-computed-inline-function-slow)
-- [English version](https://zenn.dev/kawaz/articles/js-object-literal-computed-inline-function-slow-en)
+- [Japanese](https://zenn.dev/kawaz/articles/js-object-literal-computed-inline-function-slow)
+- [English](https://zenn.dev/kawaz/articles/js-object-literal-computed-inline-function-slow-en)
 
 ### GitHub
-- [日本語版](article-js-object-literal-computed-inline-function-slow.ja.md)
-- [English version](article-js-object-literal-computed-inline-function-slow.md)
+- [Japanese](article-js-object-literal-computed-inline-function-slow.ja.md)
+- [English](article-js-object-literal-computed-inline-function-slow.md)
 
-## 概要
+## Summary
 
-「オブジェクトリテラル」「computed property」「リテラル内での直接関数定義」の3条件が揃うと約10倍遅くなる（V8/JSCのdeoptimizationが原因）。
+When these 3 conditions are met, performance degrades ~10x (caused by V8/JSC deoptimization):
 
 ```javascript
-// ❌ 遅い
+// ❌ Slow
 function createLock() {
   return { [Symbol.dispose]() { ... } };
 }
 
-// ✅ 速い（変数経由）
+// ✅ Fast (via variable)
 function createLock() {
   const dispose = () => { ... };
   return { [Symbol.dispose]: dispose };

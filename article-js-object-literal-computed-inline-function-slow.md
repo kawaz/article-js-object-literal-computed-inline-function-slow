@@ -658,8 +658,7 @@ For "literal + computed + inline function definition":
 3. `wrong call target` Deopt on each call
 4. Optimize → Deopt → Reoptimize cycle
 
-<details>
-<summary>Internal Mechanism Speculation (Thought Experiment)</summary>
+### Internal Mechanism Speculation (Thought Experiment)
 
 This is speculation, but fits the observed results.
 
@@ -698,8 +697,6 @@ This is speculation, but fits the observed results.
 - Fixed key structure allows Shape caching
 
 The truth requires reading V8 / JSC source. If anyone from inside is reading, please let us know.
-
-</details>
 
 -----
 

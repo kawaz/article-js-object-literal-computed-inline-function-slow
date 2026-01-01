@@ -662,7 +662,7 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 
 以下はあくまで推測だが、観察結果との辻褄は合う。
 
-**3条件が揃う場合（遅い）**:
+🔥 **3条件が揃う場合（遅い）**:
 ```
 1st: {staticKeys, [Symbol.dispose]: dynfn1} → Shape S0 が作られる (no cache)
 2nd: {staticKeys, [Symbol.dispose]: dynfn2} → Shape S0' が作られる (no cache)
@@ -674,7 +674,7 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 - Shape が無限に増えて GC 負荷も増加
 - → **3重苦**
 
-**後付け + computed + 直接定義（速い）**:
+✅ **後付け + computed + 直接定義（速い）**:
 ```
 1st: {staticKeys} → Shape S0 (no cache), S0 + [Symbol.dispose] → Shape S1 (no cache)
 2nd: {staticKeys} → Shape S0 (cached), S0 + [Symbol.dispose] → Shape S1 (cached)
@@ -682,14 +682,14 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 - リテラル部分の Shape S0 は2回目以降キャッシュから再利用
 - transition (S0 → S1) もキャッシュされる
 
-**リテラル + computed + 変数経由（速い）**:
+✅ **リテラル + computed + 変数経由（速い）**:
 ```
 1st: {staticKeys, [Symbol.dispose]: fn} → Shape S0 (no cache)
 2nd: {staticKeys, [Symbol.dispose]: fn} → Shape S0 (cached)
 ```
 - 関数オブジェクトが同一参照なので Shape がキャッシュ可能
 
-**リテラル + static + 直接定義（速い）**:
+✅ **リテラル + static + 直接定義（速い）**:
 ```
 1st: {staticKeys, staticFnKey: dynfn1} → Shape S0 (no cache)
 2nd: {staticKeys, staticFnKey: dynfn2} → Shape S0 (cached)

@@ -662,7 +662,7 @@ When 3 conditions are met, V8 / JSC optimization paths are bypassed.
 
 This is speculation, but fits the observed results.
 
-**When 3 conditions are met (slow)**:
+🔥 **When 3 conditions are met (slow)**:
 ```
 1st: {staticKeys, [Symbol.dispose]: dynfn1} → Shape S0 created (no cache)
 2nd: {staticKeys, [Symbol.dispose]: dynfn2} → Shape S0' created (no cache)
@@ -674,7 +674,7 @@ This is speculation, but fits the observed results.
 - Shapes grow infinitely, GC overhead increases
 - → **Triple penalty**
 
-**Add-later + computed + inline (fast)**:
+✅ **Add-later + computed + inline (fast)**:
 ```
 1st: {staticKeys} → Shape S0 (no cache), S0 + [Symbol.dispose] → Shape S1 (no cache)
 2nd: {staticKeys} → Shape S0 (cached), S0 + [Symbol.dispose] → Shape S1 (cached)
@@ -682,14 +682,14 @@ This is speculation, but fits the observed results.
 - Literal part Shape S0 reused from cache on 2nd+
 - transition (S0 → S1) is also cached
 
-**Literal + computed + via variable (fast)**:
+✅ **Literal + computed + via variable (fast)**:
 ```
 1st: {staticKeys, [Symbol.dispose]: fn} → Shape S0 (no cache)
 2nd: {staticKeys, [Symbol.dispose]: fn} → Shape S0 (cached)
 ```
 - Same function object reference allows Shape caching
 
-**Literal + static + inline (fast)**:
+✅ **Literal + static + inline (fast)**:
 ```
 1st: {staticKeys, staticFnKey: dynfn1} → Shape S0 (no cache)
 2nd: {staticKeys, staticFnKey: dynfn2} → Shape S0 (cached)

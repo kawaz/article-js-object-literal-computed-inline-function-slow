@@ -740,9 +740,13 @@ class Lock {
 }
 ```
 
-**Add-later** and **via variable** are simple rewrites that could easily be auto-detected and fixed by ESLint rules. **class** requires larger refactoring. Both patterns are fast, so choose based on ease of implementation.
+Priority order for fixes: **via variable** > **add-later** > **class**.
 
-Between the two simple fixes, **via variable** (pre-defining the function) is likely more efficient as it avoids extra Shape transitions that add-later would cause. Similar transformations could potentially be incorporated into V8 / JSC optimization passes.
+- **Via variable**: Likely simplest and best performance. No extra Shape transitions
+- **Add-later**: Simple, but more computed properties means more transitions
+- **Class**: Requires larger refactoring
+
+The rewrite pattern is mechanical, so ESLint rules for detection and auto-fix should be relatively easy to implement. Similar transformations could potentially be incorporated into V8 / JSC optimization passes.
 
 -----
 

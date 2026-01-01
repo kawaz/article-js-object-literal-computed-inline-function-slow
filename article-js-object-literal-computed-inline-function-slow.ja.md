@@ -635,9 +635,9 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 - スコープ変数参照の有無（検証2）
 
 本質的には以下の **3条件** が揃うと遅くなる:
-- **オブジェクトリテラル内で**（in literal）
-- **computed property に対して**（for computed key）
-- **関数を直接定義する**（inline function definition）
+- **オブジェクトリテラル内で**
+- **computed property に対して**
+- **関数を直接定義する**
 
 -----
 

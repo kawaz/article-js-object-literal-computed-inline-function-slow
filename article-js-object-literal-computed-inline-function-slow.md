@@ -635,9 +635,9 @@ These conditions do NOT affect the result:
 - Scope variable reference (Test 2)
 
 Essentially, these **3 conditions** together cause slowness:
-- **In object literal** (in literal)
-- **For computed property** (for computed key)
-- **Define function inline** (inline function definition)
+- **In object literal**
+- **For computed property**
+- **Define function inline**
 
 -----
 

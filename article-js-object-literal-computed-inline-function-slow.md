@@ -12,7 +12,7 @@ published: false
 
 > 📝 **Terminology used in this article** (some are not official terms)
 > - "computed property": `{ [expr]: value }` syntax (not bracket notation `obj[expr]`)
-> - "inline function definition": writing function directly in literal like `{ [key]: function() {} }`
+> - "inline function definition": writing function directly in literal (`{ [key]: function() {} }`, `{ [key]: () => {} }`, `{ [key]() {} }`)
 > - "via variable": pre-defining then passing like `const fn = ...; { [key]: fn }`
 
 ## TL;DR

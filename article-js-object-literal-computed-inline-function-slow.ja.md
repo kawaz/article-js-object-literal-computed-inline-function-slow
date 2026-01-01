@@ -658,7 +658,8 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 3. 呼び出しのたびに `wrong call target` で Deopt
 4. 最適化 → Deopt → 再最適化 の繰り返しとかが起きている？分からんが
 
-:::details 内部メカニズムの推測（思考実験）
+<details>
+<summary>内部メカニズムの推測（思考実験）</summary>
 
 以下はあくまで推測だが、観察結果との辻褄は合う。
 
@@ -698,7 +699,7 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 
 本当のところは V8 / JSC のソースを読まないとわからない。もし中の人が見ていたら教えてほしい。
 
-:::
+</details>
 
 -----
 

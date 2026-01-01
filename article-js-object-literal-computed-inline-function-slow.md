@@ -658,7 +658,8 @@ For "literal + computed + inline function definition":
 3. `wrong call target` Deopt on each call
 4. Optimize → Deopt → Reoptimize cycle
 
-:::details Internal Mechanism Speculation (Thought Experiment)
+<details>
+<summary>Internal Mechanism Speculation (Thought Experiment)</summary>
 
 This is speculation, but fits the observed results.
 
@@ -698,7 +699,7 @@ This is speculation, but fits the observed results.
 
 The truth requires reading V8 / JSC source. If anyone from inside is reading, please let us know.
 
-:::
+</details>
 
 -----
 

@@ -769,7 +769,7 @@ obj.c = 3;
 function create() {
   return {
     staticMethod() { ... },     // 静的キーはリテラルでOK
-    [Symbol.dispose]() { ... }  // 動的キーで直接関数定義が問題
+    [Symbol.dispose]() { ... }  // computed property + 直接関数定義が問題
   };
 }
 

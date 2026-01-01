@@ -641,18 +641,18 @@ Essentially, these **3 conditions** together cause slowness:
 
 -----
 
-## Why Only This Combination Is Slow (Speculation)
+## Why Only This Combination Is Slow 🤔
 
 When 3 conditions are met, V8 / JSC optimization paths are bypassed.
 
-Why other patterns are fast:
+✅ Why other patterns are fast:
 - **Add-later**: Creates static Shape first, then adds via known transition - optimization works
 - **Static key**: Shape can be determined at literal parse time - optimization works
 - **Via local variable**: Function definition is outside literal - optimization works
 - **Module scope shared**: Call target is always the same - IC is stable
 - **class**: Same function shared on prototype - Shape and IC are stable
 
-For "literal + computed + inline function definition":
+🔥 For "literal + computed + inline function definition":
 1. Cannot determine Shape at literal parse time due to computed property
 2. New function object created each time
 3. `wrong call target` Deopt on each call

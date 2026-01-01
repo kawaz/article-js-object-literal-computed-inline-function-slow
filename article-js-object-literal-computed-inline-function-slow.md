@@ -641,7 +641,7 @@ Essentially, these **3 conditions** together cause slowness:
 
 -----
 
-## Why Only This Combination Is Slow
+## Why Only This Combination Is Slow (Speculation)
 
 When 3 conditions are met, V8 / JSC optimization paths are bypassed.
 

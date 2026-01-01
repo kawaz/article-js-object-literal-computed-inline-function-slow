@@ -769,7 +769,7 @@ However, computed properties change things.
 function create() {
   return {
     staticMethod() { ... },     // static key in literal is OK
-    [Symbol.dispose]() { ... }  // THIS is the problem
+    [Symbol.dispose]() { ... }  // dynamic key + inline function is the problem
   };
 }
 

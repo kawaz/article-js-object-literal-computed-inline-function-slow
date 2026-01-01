@@ -10,7 +10,7 @@ published: false
 
 > 🌐 [English version](article-js-object-literal-computed-inline-function-slow.md)
 
-> 📝 **用語**
+> 📝 **本記事での用語**（正式名称でないものも含む）
 > - 「computed property」: `{ [expr]: value }` 形式（`obj[expr]` のブラケット記法とは別）
 > - 「直接関数定義」: `{ [key]: function() {} }` のようにリテラル内で関数を記述
 > - 「変数経由」: `const fn = ...; { [key]: fn }` のように事前定義して渡す

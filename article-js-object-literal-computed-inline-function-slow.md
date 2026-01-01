@@ -10,7 +10,7 @@ published: false
 
 > 🌐 [日本語版](article-js-object-literal-computed-inline-function-slow.ja.md)
 
-> 📝 **Terminology**
+> 📝 **Terminology used in this article** (some are not official terms)
 > - "computed property": `{ [expr]: value }` syntax (not bracket notation `obj[expr]`)
 > - "inline function definition": writing function directly in literal like `{ [key]: function() {} }`
 > - "via variable": pre-defining then passing like `const fn = ...; { [key]: fn }`

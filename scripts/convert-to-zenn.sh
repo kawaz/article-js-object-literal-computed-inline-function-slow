@@ -68,7 +68,11 @@ convert() {
     s/!\[([^\]]*)\]\(([^)#:]+\.(?:png|jpg|jpeg|gif|svg|webp))\)/![$1](https:\/\/raw.githubusercontent.com\/$repo\/main\/$2)/g;
 
     # 5. Convert Twitter/X links to Zenn embed format
-    s/\[([^\]]*)\]\((https:\/\/(?:x\.com|twitter\.com)\/[^\/]+\/status\/\d+)\)/@[tweet]($2)/g;
+    # Bare URL → @[tweet](URL)
+    s/(?<!\])\((https:\/\/(?:x\.com|twitter\.com)\/[^\/]+\/status\/\d+)\)/\@[tweet]($1)/g;
+    s/(?<![(\[])(https:\/\/(?:x\.com|twitter\.com)\/[^\/]+\/status\/\d+)(?!\))/\@[tweet]($1)/g;
+    # [text](URL)... → keep link + trailing text, add @[tweet](URL) after
+    s/(\[[^\]]+\]\((https:\/\/(?:x\.com|twitter\.com)\/[^\/]+\/status\/\d+)\))([^\n]*)/$1$3\n\n\@[tweet]($2)/g;
 
     # 6. Convert <details><summary> to Zenn format
     s/<details>\s*<summary>([^<]+)<\/summary>/:::details $1/g;

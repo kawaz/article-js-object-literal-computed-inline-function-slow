@@ -599,7 +599,7 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 
 → [bench_jsc_using.js](benchmarks/bench_jsc_using.js) / [results](benchmarks/bench_using-output.txt)
 
-Result: **Syntax doesn't matter much**. The cause is object creation pattern, not syntax.
+Result: **`using` syntax doesn't matter much**. The cause is object creation pattern, not syntax.
 
 -----
 

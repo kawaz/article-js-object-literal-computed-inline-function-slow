@@ -599,7 +599,7 @@ bun benchmarks/bench_jsc_using.js   # Bun (JSC)
 
 → [bench_jsc_using.js](benchmarks/bench_jsc_using.js) / [実行結果](benchmarks/bench_using-output.txt)
 
-結果: **構文による差はほぼない**。遅さの原因は構文ではなくやはりオブジェクト生成パターンのようだ。
+結果: **using 構文による差はほぼない**。遅さの原因は構文ではなくやはりオブジェクト生成パターンのようだ。
 
 -----
 
